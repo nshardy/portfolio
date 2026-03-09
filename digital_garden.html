@@ -301,12 +301,13 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 6px 10px;
+      padding: 8px 12px;
       border: 1px solid var(--border);
       cursor: pointer;
       transition: all 0.2s;
       color: var(--ink-mid);
-      font-size: 0.55rem;
+      font-size: 0.62rem;
+      font-family: 'Cormorant Garamond', serif;
     }
 
     .link-item:hover {
@@ -315,32 +316,101 @@
     }
 
     .link-dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       flex-shrink: 0;
     }
 
-    .link-add-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 8px;
+    .link-remove {
+      margin-left: auto;
+      opacity: 0;
+      font-size: 1.0rem;
+      font-family: 'Martian Mono', monospace;
+      line-height: 0;
+      color: var(--red);
+      transition: opacity 0.2s;
+      flex-shrink: 0;
+      padding: 0 4px;
+      align-self: center;
     }
 
-    .link-select {
-      flex: 1;
+    .link-item:hover .link-remove {
+      opacity: 0.7;
+    }
+
+    .link-search-wrap {
+      position: relative;
+      margin-top: 10px;
+    }
+
+    .link-search {
+      width: 100%;
       background: var(--bg);
       border: 1px solid var(--border);
-      color: var(--ink-mid);
-      font-family: 'Martian Mono', monospace;
-      font-size: 0.5rem;
-      padding: 6px 8px;
+      color: var(--ink);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+      padding: 9px 14px;
       outline: none;
-      appearance: none;
+      transition: border-color 0.2s;
     }
 
-    .link-select:focus {
+    .link-search:focus {
       border-color: var(--purple);
+    }
+
+    .link-search::placeholder {
+      color: var(--ink-dim);
+      font-style: italic;
+    }
+
+    .link-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 200;
+      background: var(--lift);
+      border: 1px solid var(--purple);
+      border-top: none;
+      max-height: 180px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .link-results.open {
+      display: block;
+    }
+
+    .link-result-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+      color: var(--ink-mid);
+    }
+
+    .link-result-item:hover {
+      background: var(--surface);
+      color: var(--ink);
+    }
+
+    .link-result-item.already-linked {
+      background: rgba(0, 170, 170, 0.05);
+      color: var(--ink-mid);
+    }
+
+    .link-results::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .link-results::-webkit-scrollbar-thumb {
+      background: var(--border);
     }
 
     .del-btn {
@@ -530,11 +600,10 @@
         <div class="panel-links">
           <div class="links-label">Connections</div>
           <div class="link-list" id="linkList"></div>
-          <div class="link-add-row">
-            <select class="link-select" id="linkSelect">
-              <option value="">link to a note...</option>
-            </select>
-            <button class="tb-btn" onclick="addLink()" style="padding:6px 12px;font-size:0.48rem">Add</button>
+          <div class="link-search-wrap">
+            <input class="link-search" id="linkSearch" type="text" placeholder="Search to connect a note…"
+              autocomplete="off" oninput="onLinkSearch()" onfocus="onLinkSearch()">
+            <div class="link-results" id="linkResults"></div>
           </div>
         </div>
       </div>
@@ -879,15 +948,9 @@
 
       // Links
       renderLinkList(note);
-
-      // Link select dropdown
-      const sel = document.getElementById('linkSelect');
-      sel.innerHTML = '<option value="">link to a note...</option>';
-      notes.filter(n => n.id !== note.id).forEach(n => {
-        const opt = document.createElement('option');
-        opt.value = n.id; opt.textContent = n.title;
-        sel.appendChild(opt);
-      });
+      // Clear search
+      const ls = document.getElementById('linkSearch');
+      if (ls) { ls.value = ''; closeLinkResults(); }
     }
 
     function renderLinkList(note) {
@@ -900,10 +963,63 @@
       list.innerHTML = connected.map(n => `
     <div class="link-item" onclick="openNote(notes.find(x=>x.id===${n.id}))">
       <div class="link-dot" style="background:${nodeColor(n)}"></div>
-      <span>${n.title}</span>
-      <span style="margin-left:auto;opacity:0.4;font-size:0.42rem;cursor:pointer" onclick="event.stopPropagation();removeLink(${note.id},${n.id})">×</span>
+      <span>${n.title || 'Untitled'}</span>
+      <span class="link-remove" onclick="event.stopPropagation();removeLink(${note.id},${n.id})">×</span>
     </div>
-  `).join('');
+  `).join('') || `<div style="font-size:0.7rem;color:var(--ink-dim);font-style:italic;padding:4px 0">No connections yet</div>`;
+    }
+
+    function onLinkSearch() {
+      if (!selectedNote) return;
+      const q = document.getElementById('linkSearch').value.toLowerCase();
+      const results = document.getElementById('linkResults');
+      const alreadyLinked = id => links.some(l =>
+        (l.from === selectedNote.id && l.to === id) ||
+        (l.from === id && l.to === selectedNote.id)
+      );
+      const candidates = notes
+        .filter(n => n.id !== selectedNote.id)
+        .filter(n => !q || (n.title || 'Untitled').toLowerCase().includes(q));
+
+      if (!candidates.length) {
+        results.innerHTML = `<div style="padding:10px 14px;font-size:0.85rem;color:var(--ink-dim);font-family:'Cormorant Garamond',serif;font-style:italic">No notes found</div>`;
+        results.classList.add('open');
+        return;
+      }
+
+      results.innerHTML = candidates.slice(0, 10).map(n => {
+        const linked = alreadyLinked(n.id);
+        return `
+    <div class="link-result-item ${linked ? 'already-linked' : ''}"
+      onmousedown="event.preventDefault(); addLinkById(${n.id})">
+      <div class="link-dot" style="background:${nodeColor(n)}"></div>
+      <span>${n.title || 'Untitled'}</span>
+      ${linked ? '<span style="margin-left:auto;font-size:0.55rem;color:var(--cyan);font-family:\'Martian Mono\',monospace">✓</span>' : ''}
+    </div>`;
+      }).join('');
+      results.classList.add('open');
+    }
+
+    function closeLinkResults() {
+      document.getElementById('linkResults')?.classList.remove('open');
+    }
+
+    function addLinkById(toId) {
+      if (!selectedNote) return;
+      const existingIdx = links.findIndex(l =>
+        (l.from === selectedNote.id && l.to === toId) ||
+        (l.from === toId && l.to === selectedNote.id)
+      );
+      if (existingIdx >= 0) {
+        links.splice(existingIdx, 1); // toggle off
+      } else {
+        links.push({ from: selectedNote.id, to: toId }); // toggle on
+      }
+      saveToStorage();
+      markDirty();
+      renderLinkList(selectedNote);
+      onLinkSearch(); // refresh list in place
+      document.getElementById('linkSearch').focus();
     }
 
     function closePanel() {
@@ -941,21 +1057,6 @@
       toast('Note deleted');
     }
 
-    function addLink() {
-      const sel = document.getElementById('linkSelect');
-      const toId = parseInt(sel.value);
-      if (!toId || !selectedNote) return;
-      const exists = links.some(l =>
-        (l.from === selectedNote.id && l.to === toId) ||
-        (l.from === toId && l.to === selectedNote.id)
-      );
-      if (!exists) { links.push({ from: selectedNote.id, to: toId }); }
-      sel.value = '';
-      saveToStorage();
-      markDirty();
-      renderLinkList(selectedNote);
-    }
-
     function removeLink(a, b) {
       links = links.filter(l => !((l.from === a && l.to === b) || (l.from === b && l.to === a)));
       saveToStorage();
@@ -988,6 +1089,9 @@
     }
 
     document.getElementById('searchInput').addEventListener('input', markDirty);
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.link-search-wrap')) closeLinkResults();
+    });
 
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
