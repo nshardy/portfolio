@@ -659,6 +659,7 @@
     let vpX = 0, vpY = 0, vpScale = 1;
     let isDragging = false, dragStartX = 0, dragStartY = 0, dragVpX = 0, dragVpY = 0;
     let nodeDragging = null, nodeDragOffX = 0, nodeDragOffY = 0, nodeDragMoved = false;
+    let nodeDragStartX = 0, nodeDragStartY = 0;
 
     const canvas = document.getElementById('graphCanvas');
     const ctx = canvas.getContext('2d');
@@ -877,6 +878,8 @@
       if (hit) {
         nodeDragging = hit;
         nodeDragMoved = false;
+        nodeDragStartX = cx;
+        nodeDragStartY = cy;
         const s = worldToScreen(hit.x, hit.y);
         nodeDragOffX = cx - s.x;
         nodeDragOffY = cy - s.y;
@@ -893,9 +896,12 @@
       markDirty();
       const { x: cx, y: cy } = canvasXY(e);
       if (nodeDragging) {
-        const w = screenToWorld(cx - nodeDragOffX, cy - nodeDragOffY);
-        nodeDragging.x = w.x; nodeDragging.y = w.y;
-        nodeDragMoved = true;
+        const dist = Math.hypot(cx - nodeDragStartX, cy - nodeDragStartY);
+        if (dist > 5) {
+          nodeDragMoved = true;
+          const w = screenToWorld(cx - nodeDragOffX, cy - nodeDragOffY);
+          nodeDragging.x = w.x; nodeDragging.y = w.y;
+        }
         return;
       }
       if (isDragging) {
@@ -935,6 +941,7 @@
     // ── NOTE PANEL ────────────────────────────────────────────────────
     function openNote(note) {
       selectedNote = note;
+      markDirty();
       document.getElementById('notePanel').classList.add('open');
       document.getElementById('panelNoteId').textContent = `note #${note.id}`;
       document.getElementById('noteTitle').value = note.title;
@@ -966,7 +973,7 @@
       <span>${n.title || 'Untitled'}</span>
       <span class="link-remove" onclick="event.stopPropagation();removeLink(${note.id},${n.id})">×</span>
     </div>
-  `).join('') || `<div style="font-size:0.7rem;color:var(--ink-dim);font-style:italic;padding:4px 0">No connections yet</div>`;
+  `).join('') || `<div style="font-size:0.75rem;color:var(--ink-dim);font-style:italic;padding:4px 0">No connections yet</div>`;
     }
 
     function onLinkSearch() {
@@ -1025,6 +1032,7 @@
     function closePanel() {
       document.getElementById('notePanel').classList.remove('open');
       selectedNote = null;
+      markDirty();
     }
 
     function toggleTag(tag) {
