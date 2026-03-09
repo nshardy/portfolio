@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Garden — Digital Notes</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Martian+Mono:wght@200;300;400&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0b0b12;
+      --surface: #10101a;
+      --lift: #16162a;
+      --border: rgba(255, 255, 255, 0.07);
+      --ink: #dcd8f0;
+      --ink-mid: #8a859e;
+      --ink-dim: #4e4a62;
+      --cyan: #00AAAA;
+      --purple: #8b7fcf;
+      --green: #4ec994;
+      --yellow: #c9a96e;
+      --red: #e0786a;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Martian Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9000;
+      opacity: 0.3;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    }
+
+    /* TOPBAR */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 50px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      z-index: 100;
+      position: relative;
+    }
+
+    .brand {
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      color: var(--cyan);
+    }
+
+    .brand-sub {
+      font-size: 0.48rem;
+      color: var(--ink-dim);
+      letter-spacing: 0.1em;
+      margin-left: 12px;
+    }
+
+    .topbar-right {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .tb-btn {
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.5rem;
+      letter-spacing: 0.12em;
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--ink-mid);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+
+    .tb-btn:hover {
+      color: var(--cyan);
+      border-color: var(--cyan);
+    }
+
+    .tb-btn.primary {
+      background: var(--cyan);
+      color: var(--bg);
+      border-color: var(--cyan);
+    }
+
+    .tb-btn.primary:hover {
+      background: transparent;
+      color: var(--cyan);
+    }
+
+    /* MAIN LAYOUT */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* GRAPH CANVAS */
+    #graphCanvas {
+      position: absolute;
+      inset: 0;
+      cursor: grab;
+    }
+
+    #graphCanvas.dragging {
+      cursor: grabbing;
+    }
+
+    /* SIDEBAR — NOTE EDITOR */
+    .note-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 380px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 50;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+    }
+
+    .note-panel.open {
+      transform: translateX(0);
+    }
+
+    .panel-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .panel-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .panel-tag {
+      font-size: 0.46rem;
+      letter-spacing: 0.15em;
+      color: var(--ink-dim);
+      text-transform: uppercase;
+    }
+
+    .panel-close {
+      font-size: 0.5rem;
+      color: var(--ink-dim);
+      cursor: pointer;
+      letter-spacing: 0.1em;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      background: none;
+      font-family: 'Martian Mono', monospace;
+      transition: color 0.2s;
+      text-transform: uppercase;
+    }
+
+    .panel-close:hover {
+      color: var(--ink);
+    }
+
+    #noteTitle {
+      width: 100%;
+      background: none;
+      border: none;
+      outline: none;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.6rem;
+      font-weight: 300;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      resize: none;
+      line-height: 1.2;
+      padding: 0;
+    }
+
+    .panel-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .meta-tag {
+      font-size: 0.45rem;
+      letter-spacing: 0.1em;
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      color: var(--ink-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+
+    .meta-tag.selected {
+      border-color: var(--tag-color);
+      color: var(--tag-color);
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
+
+    .panel-body::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .panel-body::-webkit-scrollbar-thumb {
+      background: var(--border);
+    }
+
+    #noteContent {
+      width: 100%;
+      min-height: 200px;
+      background: none;
+      border: none;
+      outline: none;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--ink-mid);
+      line-height: 1.8;
+      resize: none;
+      user-select: text;
+    }
+
+    #noteContent::placeholder {
+      color: var(--ink-dim);
+      font-style: italic;
+    }
+
+    .panel-links {
+      margin-top: 20px;
+    }
+
+    .links-label {
+      font-size: 0.46rem;
+      letter-spacing: 0.15em;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .link-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .link-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--ink-mid);
+      font-size: 0.55rem;
+    }
+
+    .link-item:hover {
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+
+    .link-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .link-add-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .link-select {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--ink-mid);
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.5rem;
+      padding: 6px 8px;
+      outline: none;
+      appearance: none;
+    }
+
+    .link-select:focus {
+      border-color: var(--purple);
+    }
+
+    .panel-footer {
+      padding: 14px 24px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .del-btn {
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.48rem;
+      letter-spacing: 0.1em;
+      background: none;
+      border: 1px solid rgba(224, 120, 106, 0.2);
+      color: var(--red);
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+
+    .del-btn:hover {
+      background: rgba(224, 120, 106, 0.1);
+    }
+
+    .save-note-btn {
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.48rem;
+      letter-spacing: 0.1em;
+      background: var(--cyan);
+      color: var(--bg);
+      border: none;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+
+    .save-note-btn:hover {
+      opacity: 0.85;
+    }
+
+    /* MINIMAP */
+    .minimap {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      z-index: 50;
+      width: 140px;
+      height: 90px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .minimap canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* SEARCH */
+    .search-wrap {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #searchInput {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--ink);
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.08em;
+      padding: 8px 14px;
+      outline: none;
+      width: 240px;
+      transition: border-color 0.2s;
+    }
+
+    #searchInput:focus {
+      border-color: var(--purple);
+    }
+
+    #searchInput::placeholder {
+      color: var(--ink-dim);
+    }
+
+    /* LEGEND */
+    .legend {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 50;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      font-size: 0.46rem;
+      letter-spacing: 0.08em;
+    }
+
+    .legend-title {
+      color: var(--ink-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 8px;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink-dim);
+      margin-bottom: 5px;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: var(--cyan);
+      color: var(--bg);
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.52rem;
+      letter-spacing: 0.1em;
+      padding: 8px 20px;
+      opacity: 0;
+      transition: all 0.3s;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="topbar">
+    <div>
+      <span class="brand">GARDEN</span>
+      <span class="brand-sub">digital notes · by Noah S Hardy</span>
+    </div>
+    <div class="topbar-right">
+      <input type="text" id="searchInput" placeholder="search notes...">
+      <button class="tb-btn" onclick="resetView()">Reset View</button>
+      <button class="tb-btn primary" onclick="newNote()">+ New Note</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <canvas id="graphCanvas"></canvas>
+
+    <!-- NOTE PANEL -->
+    <div class="note-panel" id="notePanel">
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <span class="panel-tag" id="panelNoteId"></span>
+          <button class="panel-close" onclick="closePanel()">close ×</button>
+        </div>
+        <textarea id="noteTitle" rows="1" placeholder="Note title..." oninput="autoResize(this)"></textarea>
+        <div class="panel-meta" id="panelMeta">
+          <div class="meta-tag" data-tag="idea" style="--tag-color:#00AAAA" onclick="toggleTag('idea')">idea</div>
+          <div class="meta-tag" data-tag="question" style="--tag-color:#8b7fcf" onclick="toggleTag('question')">question
+          </div>
+          <div class="meta-tag" data-tag="reference" style="--tag-color:#c9a96e" onclick="toggleTag('reference')">
+            reference</div>
+          <div class="meta-tag" data-tag="todo" style="--tag-color:#e0786a" onclick="toggleTag('todo')">todo</div>
+          <div class="meta-tag" data-tag="insight" style="--tag-color:#4ec994" onclick="toggleTag('insight')">insight
+          </div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <textarea id="noteContent" rows="10"
+          placeholder="Write anything. These thoughts connect to each other..."></textarea>
+        <div class="panel-links">
+          <div class="links-label">Connections</div>
+          <div class="link-list" id="linkList"></div>
+          <div class="link-add-row">
+            <select class="link-select" id="linkSelect">
+              <option value="">link to a note...</option>
+            </select>
+            <button class="tb-btn" onclick="addLink()" style="padding:6px 12px;font-size:0.48rem">Add</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <button class="del-btn" onclick="deleteNote()">Delete note</button>
+        <button class="save-note-btn" onclick="saveNote()">Save</button>
+      </div>
+    </div>
+
+    <div class="minimap"><canvas id="minimapCanvas"></canvas></div>
+
+    <div class="legend">
+      <div class="legend-title">Tags</div>
+      <div class="legend-row">
+        <div class="legend-dot" style="background:#00AAAA"></div>idea
+      </div>
+      <div class="legend-row">
+        <div class="legend-dot" style="background:#8b7fcf"></div>question
+      </div>
+      <div class="legend-row">
+        <div class="legend-dot" style="background:#c9a96e"></div>reference
+      </div>
+      <div class="legend-row">
+        <div class="legend-dot" style="background:#e0786a"></div>todo
+      </div>
+      <div class="legend-row">
+        <div class="legend-dot" style="background:#4ec994"></div>insight
+      </div>
+      <div class="legend-row">
+        <div class="legend-dot" style="background:#4e4a62"></div>untagged
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════
+    //  DATA
+    // ═══════════════════════════════════════════════════════════════════
+    const TAG_COLORS = {
+      idea: '#00AAAA', question: '#8b7fcf', reference: '#c9a96e',
+      todo: '#e0786a', insight: '#4ec994',
+    };
+
+    let notes = [];
+    let links = [];
+    let nextId = 1;
+    let selectedNote = null;
+    let hoveredNote = null;
+
+    // Viewport
+    let vpX = 0, vpY = 0, vpScale = 1;
+    let isDragging = false, dragStartX = 0, dragStartY = 0, dragVpX = 0, dragVpY = 0;
+    let nodeDragging = null, nodeDragOffX = 0, nodeDragOffY = 0, nodeDragMoved = false;
+
+    const canvas = document.getElementById('graphCanvas');
+    const ctx = canvas.getContext('2d');
+    const miniCanvas = document.getElementById('minimapCanvas');
+    const miniCtx = miniCanvas.getContext('2d');
+
+    // ── SEED DATA ──────────────────────────────────────────────────────
+    function seedData() {
+      const seed = [
+        { id: 1, title: 'Digital Garden', content: 'A non-linear space for thinking. Unlike a blog, notes here evolve and link to each other — ideas grow rather than publish.', tags: ['idea'], x: 0, y: 0 },
+        { id: 2, title: 'Evergreen Notes', content: 'Notes that are concept-oriented rather than time-oriented. Kept up to date as thinking evolves. Named after trees, not dates.', tags: ['reference'], x: 220, y: -80 },
+        { id: 3, title: 'Zettelkasten Method', content: 'A slip-box system. Every note links to others. The connections are more valuable than the notes themselves.', tags: ['reference'], x: 220, y: 80 },
+        { id: 4, title: 'Spaced Repetition', content: 'Reviewing information at increasing intervals. The forgetting curve works against you — this works with it.', tags: ['insight'], x: 460, y: -120 },
+        { id: 5, title: 'Why do we forget?', content: 'Is forgetting a failure of memory, or a feature? Perhaps the brain discards what it deems unimportant. What does it keep?', tags: ['question'], x: 460, y: 60 },
+        { id: 6, title: 'Build a second brain', content: 'The idea of offloading memory to an external system. Frees working memory for synthesis rather than recall.', tags: ['idea'], x: -180, y: 100 },
+        { id: 7, title: 'Read before you write', content: 'You cannot make connections without raw material. Input before output. But not too much — the trap of infinite research.', tags: ['insight'], x: -180, y: -100 },
+        { id: 8, title: 'Things to explore', content: '- Graph databases for personal notes\n- Obsidian vs Roam\n- How Twitter threads work as public Zettelkasten', tags: ['todo'], x: -360, y: 0 },
+      ];
+      const seedLinks = [
+        [1, 2], [1, 3], [1, 6], [2, 3], [3, 4], [3, 5], [4, 5], [6, 7], [7, 8], [2, 7]
+      ];
+      seed.forEach(n => { notes.push(n); if (n.id >= nextId) nextId = n.id + 1; });
+      seedLinks.forEach(([a, b]) => links.push({ from: a, to: b }));
+    }
+    seedData();
+
+    // ── COORDINATE HELPERS ────────────────────────────────────────────
+    function worldToScreen(x, y) {
+      return {
+        x: (x + vpX) * vpScale + canvas.width / 2,
+        y: (y + vpY) * vpScale + canvas.height / 2,
+      };
+    }
+    function screenToWorld(x, y) {
+      return {
+        x: (x - canvas.width / 2) / vpScale - vpX,
+        y: (y - canvas.height / 2) / vpScale - vpY,
+      };
+    }
+
+    function nodeRadius(note) {
+      const conns = links.filter(l => l.from === note.id || l.to === note.id).length;
+      return 10 + conns * 3;
+    }
+
+    function nodeColor(note) {
+      if (!note.tags || note.tags.length === 0) return '#4e4a62';
+      return TAG_COLORS[note.tags[0]] || '#4e4a62';
+    }
+
+    function canvasXY(e) {
+      const r = canvas.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+
+    function noteAt(cx, cy) {
+      const w = screenToWorld(cx, cy);
+      for (const n of [...notes].reverse()) {
+        const s = worldToScreen(n.x, n.y);
+        const r = nodeRadius(n) * vpScale;
+        if (Math.hypot(s.x - cx, s.y - cy) < r + 4) return n;
+      }
+      return null;
+    }
+
+    // ── RENDER ────────────────────────────────────────────────────────
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      markDirty();
+    }
+
+    let dirty = true;
+    function markDirty() { dirty = true; }
+
+    function draw() {
+      if (dirty) {
+        dirty = false;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Search filter
+        const q = document.getElementById('searchInput').value.toLowerCase();
+
+        // Draw links
+        links.forEach(l => {
+          const from = notes.find(n => n.id === l.from);
+          const to = notes.find(n => n.id === l.to);
+          if (!from || !to) return;
+          const fs = worldToScreen(from.x, from.y);
+          const ts = worldToScreen(to.x, to.y);
+          const isSelected = selectedNote && (selectedNote.id === l.from || selectedNote.id === l.to);
+          ctx.beginPath();
+          ctx.moveTo(fs.x, fs.y);
+          ctx.lineTo(ts.x, ts.y);
+          ctx.strokeStyle = isSelected ? 'rgba(0,170,170,0.4)' : 'rgba(255,255,255,0.07)';
+          ctx.lineWidth = isSelected ? 1.5 : 1;
+          ctx.stroke();
+        });
+
+        // Draw nodes
+        notes.forEach(n => {
+          const s = worldToScreen(n.x, n.y);
+          const r = nodeRadius(n) * vpScale;
+          const color = nodeColor(n);
+          const isSelected = selectedNote?.id === n.id;
+          const isHovered = hoveredNote?.id === n.id;
+          const dimmed = q && !n.title.toLowerCase().includes(q) && !n.content.toLowerCase().includes(q);
+
+          ctx.globalAlpha = dimmed ? 0.15 : 1;
+
+          // Glow
+          if (isSelected || isHovered) {
+            const grd = ctx.createRadialGradient(s.x, s.y, r, s.x, s.y, r * 3);
+            grd.addColorStop(0, color + '40');
+            grd.addColorStop(1, 'transparent');
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, r * 3, 0, Math.PI * 2);
+            ctx.fillStyle = grd;
+            ctx.fill();
+          }
+
+          // Node circle
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+          ctx.fillStyle = isSelected ? color : color + '33';
+          ctx.fill();
+          ctx.strokeStyle = isSelected ? color : color + 'aa';
+          ctx.lineWidth = isSelected ? 2 : 1;
+          ctx.stroke();
+
+          // Label
+          if (vpScale > 0.4) {
+            ctx.fillStyle = dimmed ? '#4e4a62' : (isSelected ? '#dcd8f0' : '#8a859e');
+            const fs = Math.max(9, Math.min(13, 11 * vpScale));
+            ctx.font = `${fs}px "Martian Mono", monospace`;
+            ctx.textAlign = 'center';
+            const label = n.title.length > 20 ? n.title.slice(0, 18) + '…' : n.title;
+            ctx.fillText(label, s.x, s.y + r + 14 * vpScale);
+          }
+
+          ctx.globalAlpha = 1;
+        });
+
+        drawMinimap();
+      } // end if dirty
+      requestAnimationFrame(draw);
+    }
+
+    function drawMinimap() {
+      const W = miniCanvas.width = 140, H = miniCanvas.height = 90;
+      miniCtx.clearRect(0, 0, W, H);
+      miniCtx.fillStyle = '#10101a';
+      miniCtx.fillRect(0, 0, W, H);
+
+      if (!notes.length) return;
+      const xs = notes.map(n => n.x), ys = notes.map(n => n.y);
+      const minX = Math.min(...xs) - 60, maxX = Math.max(...xs) + 60;
+      const minY = Math.min(...ys) - 60, maxY = Math.max(...ys) + 60;
+      const scaleX = W / (maxX - minX), scaleY = H / (maxY - minY);
+      const sc = Math.min(scaleX, scaleY) * 0.85;
+      const ox = W / 2 - (minX + maxX) / 2 * sc;
+      const oy = H / 2 - (minY + maxY) / 2 * sc;
+
+      links.forEach(l => {
+        const f = notes.find(n => n.id === l.from), t = notes.find(n => n.id === l.to);
+        if (!f || !t) return;
+        miniCtx.beginPath();
+        miniCtx.moveTo(f.x * sc + ox, f.y * sc + oy);
+        miniCtx.lineTo(t.x * sc + ox, t.y * sc + oy);
+        miniCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+        miniCtx.lineWidth = 0.5;
+        miniCtx.stroke();
+      });
+
+      notes.forEach(n => {
+        miniCtx.beginPath();
+        miniCtx.arc(n.x * sc + ox, n.y * sc + oy, 3, 0, Math.PI * 2);
+        miniCtx.fillStyle = nodeColor(n) + 'cc';
+        miniCtx.fill();
+      });
+    }
+
+    // ── INTERACTION ───────────────────────────────────────────────────
+    canvas.addEventListener('mousedown', e => {
+      markDirty();
+      const { x: cx, y: cy } = canvasXY(e);
+      const hit = noteAt(cx, cy);
+      if (hit) {
+        nodeDragging = hit;
+        nodeDragMoved = false;
+        const s = worldToScreen(hit.x, hit.y);
+        nodeDragOffX = cx - s.x;
+        nodeDragOffY = cy - s.y;
+        canvas.classList.add('dragging');
+      } else {
+        isDragging = true;
+        dragStartX = cx; dragStartY = cy;
+        dragVpX = vpX; dragVpY = vpY;
+        canvas.classList.add('dragging');
+      }
+    });
+
+    canvas.addEventListener('mousemove', e => {
+      markDirty();
+      const { x: cx, y: cy } = canvasXY(e);
+      if (nodeDragging) {
+        const w = screenToWorld(cx - nodeDragOffX, cy - nodeDragOffY);
+        nodeDragging.x = w.x; nodeDragging.y = w.y;
+        nodeDragMoved = true;
+        return;
+      }
+      if (isDragging) {
+        vpX = dragVpX + (cx - dragStartX) / vpScale;
+        vpY = dragVpY + (cy - dragStartY) / vpScale;
+        return;
+      }
+      const hit = noteAt(cx, cy);
+      hoveredNote = hit;
+      canvas.style.cursor = hit ? 'pointer' : 'grab';
+    });
+
+    canvas.addEventListener('mouseup', e => {
+      if (nodeDragging) {
+        if (!nodeDragMoved) openNote(nodeDragging);
+        nodeDragging = null;
+        nodeDragMoved = false;
+        canvas.classList.remove('dragging');
+        return;
+      }
+      if (isDragging) {
+        const { x: cx, y: cy } = canvasXY(e);
+        const dx = Math.abs(cx - dragStartX), dy = Math.abs(cy - dragStartY);
+        if (dx < 4 && dy < 4) closePanel();
+        isDragging = false; canvas.classList.remove('dragging');
+      }
+    });
+
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      const factor = e.deltaY > 0 ? 0.9 : 1.1;
+      vpScale = Math.max(0.2, Math.min(3, vpScale * factor));
+      markDirty();
+    }, { passive: false });
+
+    // ── NOTE PANEL ────────────────────────────────────────────────────
+    function openNote(note) {
+      selectedNote = note;
+      document.getElementById('notePanel').classList.add('open');
+      document.getElementById('panelNoteId').textContent = `note #${note.id}`;
+      document.getElementById('noteTitle').value = note.title;
+      document.getElementById('noteContent').value = note.content;
+      autoResize(document.getElementById('noteTitle'));
+
+      // Tags
+      document.querySelectorAll('.meta-tag').forEach(el => {
+        el.classList.toggle('selected', note.tags?.includes(el.dataset.tag));
+      });
+
+      // Links
+      renderLinkList(note);
+
+      // Link select dropdown
+      const sel = document.getElementById('linkSelect');
+      sel.innerHTML = '<option value="">link to a note...</option>';
+      notes.filter(n => n.id !== note.id).forEach(n => {
+        const opt = document.createElement('option');
+        opt.value = n.id; opt.textContent = n.title;
+        sel.appendChild(opt);
+      });
+    }
+
+    function renderLinkList(note) {
+      const connected = links
+        .filter(l => l.from === note.id || l.to === note.id)
+        .map(l => notes.find(n => n.id === (l.from === note.id ? l.to : l.from)))
+        .filter(Boolean);
+
+      const list = document.getElementById('linkList');
+      list.innerHTML = connected.map(n => `
+    <div class="link-item" onclick="openNote(notes.find(x=>x.id===${n.id}))">
+      <div class="link-dot" style="background:${nodeColor(n)}"></div>
+      <span>${n.title}</span>
+      <span style="margin-left:auto;opacity:0.4;font-size:0.42rem;cursor:pointer" onclick="event.stopPropagation();removeLink(${note.id},${n.id})">×</span>
+    </div>
+  `).join('');
+    }
+
+    function closePanel() {
+      document.getElementById('notePanel').classList.remove('open');
+      selectedNote = null;
+    }
+
+    function toggleTag(tag) {
+      const el = document.querySelector(`.meta-tag[data-tag="${tag}"]`);
+      el.classList.toggle('selected');
+    }
+
+    function saveNote() {
+      if (!selectedNote) return;
+      selectedNote.title = document.getElementById('noteTitle').value.trim() || 'Untitled';
+      selectedNote.content = document.getElementById('noteContent').value;
+      selectedNote.tags = [...document.querySelectorAll('.meta-tag.selected')].map(el => el.dataset.tag);
+      toast('Note saved');
+    }
+
+    function deleteNote() {
+      if (!selectedNote) return;
+      notes = notes.filter(n => n.id !== selectedNote.id);
+      links = links.filter(l => l.from !== selectedNote.id && l.to !== selectedNote.id);
+      closePanel();
+      toast('Note deleted');
+    }
+
+    function addLink() {
+      const sel = document.getElementById('linkSelect');
+      const toId = parseInt(sel.value);
+      if (!toId || !selectedNote) return;
+      const exists = links.some(l =>
+        (l.from === selectedNote.id && l.to === toId) ||
+        (l.from === toId && l.to === selectedNote.id)
+      );
+      if (!exists) { links.push({ from: selectedNote.id, to: toId }); }
+      sel.value = '';
+      renderLinkList(selectedNote);
+    }
+
+    function removeLink(a, b) {
+      links = links.filter(l => !((l.from === a && l.to === b) || (l.from === b && l.to === a)));
+      if (selectedNote) renderLinkList(selectedNote);
+    }
+
+    // ── NEW NOTE ──────────────────────────────────────────────────────
+    function newNote() {
+      const w = screenToWorld(canvas.width / 2 + (Math.random() - 0.5) * 200, canvas.height / 2 + (Math.random() - 0.5) * 200);
+      const note = { id: nextId++, title: '', content: '', tags: [], x: w.x, y: w.y };
+      notes.push(note);
+      openNote(note);
+      document.getElementById('noteTitle').focus();
+    }
+
+    function resetView() { vpX = 0; vpY = 0; vpScale = 1; }
+
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
+
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    document.getElementById('searchInput').addEventListener('input', markDirty);
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    draw();
+  </script>
+</body>
+
+</html>

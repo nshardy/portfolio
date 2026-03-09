@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bundle Weight — by Noah S Hardy</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Martian+Mono:wght@200;300;400&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0b0b12;
+      --surface: #10101a;
+      --lift: #16162a;
+      --border: rgba(255, 255, 255, 0.07);
+      --ink: #dcd8f0;
+      --ink-mid: #8a859e;
+      --ink-dim: #4e4a62;
+      --cyan: #00AAAA;
+      --purple: #8b7fcf;
+      --green: #4ec994;
+      --red: #e0786a;
+      --yellow: #c9a96e;
+      --orange: #d4845a;
+    }
+
+    html,
+    body {
+      min-height: 100vh;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Martian Mono', monospace;
+      display: flex;
+      flex-direction: column;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.3;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    }
+
+    /* TOPBAR */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 52px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      color: var(--cyan);
+    }
+
+    .brand-sub {
+      font-size: 0.48rem;
+      color: var(--ink-dim);
+      letter-spacing: 0.1em;
+      margin-left: 12px;
+    }
+
+    /* HERO */
+    .hero {
+      padding: 52px 32px 40px;
+      max-width: 780px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.4rem, 5vw, 3.8rem);
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+      margin-bottom: 10px;
+      color: var(--ink);
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--cyan);
+    }
+
+    .hero-sub {
+      font-size: 0.6rem;
+      color: var(--ink-dim);
+      letter-spacing: 0.08em;
+      line-height: 1.7;
+      margin-bottom: 32px;
+      max-width: 520px;
+    }
+
+    /* SEARCH BAR */
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .pkg-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--ink);
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.75rem;
+      padding: 14px 18px;
+      outline: none;
+      transition: border-color 0.25s;
+      letter-spacing: 0.05em;
+    }
+
+    .pkg-input:focus {
+      border-color: var(--purple);
+    }
+
+    .pkg-input::placeholder {
+      color: var(--ink-dim);
+    }
+
+    .analyze-btn {
+      background: var(--cyan);
+      color: var(--bg);
+      border: none;
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.13em;
+      padding: 14px 28px;
+      cursor: pointer;
+      transition: all 0.25s;
+      text-transform: uppercase;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .analyze-btn:hover {
+      background: transparent;
+      color: var(--cyan);
+      outline: 1px solid var(--cyan);
+    }
+
+    .analyze-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* QUICK PICKS */
+    .quick-picks {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .qp {
+      font-size: 0.48rem;
+      letter-spacing: 0.1em;
+      padding: 5px 11px;
+      border: 1px solid var(--border);
+      color: var(--ink-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: none;
+    }
+
+    .qp:hover {
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+
+    /* RESULTS */
+    .results {
+      max-width: 780px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 0 32px 60px;
+    }
+
+    /* SIZE VERDICT */
+    .verdict {
+      border: 1px solid var(--border);
+      padding: 28px 32px;
+      margin-bottom: 20px;
+      background: var(--surface);
+      position: relative;
+      overflow: hidden;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .verdict::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--verdict-color, var(--cyan));
+    }
+
+    .verdict-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .verdict-left {}
+
+    .verdict-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 300;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+
+    .verdict-version {
+      font-size: 0.5rem;
+      color: var(--ink-dim);
+      margin-top: 3px;
+      letter-spacing: 0.1em;
+    }
+
+    .size-blocks {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .size-block {
+      text-align: right;
+    }
+
+    .size-val {
+      font-size: 1.8rem;
+      font-weight: 200;
+      line-height: 1;
+      color: var(--verdict-color, var(--cyan));
+    }
+
+    .size-val.gzip {
+      color: var(--green);
+    }
+
+    .size-label {
+      font-size: 0.44rem;
+      color: var(--ink-dim);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    .verdict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      font-size: 0.52rem;
+      letter-spacing: 0.1em;
+      padding: 6px 12px;
+      border: 1px solid var(--verdict-color, var(--cyan));
+      color: var(--verdict-color, var(--cyan));
+    }
+
+    .verdict-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* BAR CHART */
+    .bar-section {
+      margin-bottom: 20px;
+    }
+
+    .bar-label-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .bar-label {
+      font-size: 0.5rem;
+      letter-spacing: 0.12em;
+      color: var(--ink-dim);
+      text-transform: uppercase;
+    }
+
+    .bar-track {
+      height: 6px;
+      background: var(--border);
+      position: relative;
+    }
+
+    .bar-fill {
+      height: 100%;
+      transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+      background: var(--verdict-color, var(--cyan));
+      position: relative;
+    }
+
+    .bar-fill::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: -3px;
+      width: 2px;
+      height: 12px;
+      background: currentColor;
+    }
+
+    /* COMPARABLE */
+    .comparables {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .comp-item {
+      font-size: 0.48rem;
+      letter-spacing: 0.08em;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      color: var(--ink-dim);
+    }
+
+    .comp-item span {
+      color: var(--ink-mid);
+    }
+
+    /* CARDS GRID */
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 20px 22px;
+      animation: fadeIn 0.5s ease;
+      position: relative;
+    }
+
+    .card-title {
+      font-size: 0.48rem;
+      letter-spacing: 0.15em;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .card-body {
+      font-size: 0.58rem;
+      color: var(--ink-mid);
+      line-height: 1.7;
+    }
+
+    .card-body strong {
+      color: var(--ink);
+      font-weight: 400;
+    }
+
+    .card-body code {
+      color: var(--yellow);
+      font-size: 0.55rem;
+    }
+
+    /* ALTERNATIVES */
+    .alts {
+      margin-bottom: 20px;
+    }
+
+    .alt-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      animation: fadeIn 0.4s ease;
+      gap: 12px;
+    }
+
+    .alt-item:hover {
+      border-color: var(--purple);
+    }
+
+    .alt-name {
+      font-size: 0.6rem;
+      color: var(--ink);
+    }
+
+    .alt-desc {
+      font-size: 0.5rem;
+      color: var(--ink-dim);
+      margin-top: 2px;
+      letter-spacing: 0.03em;
+    }
+
+    .alt-size {
+      font-size: 0.6rem;
+      color: var(--green);
+      font-weight: 200;
+      white-space: nowrap;
+    }
+
+    .alt-savings {
+      font-size: 0.44rem;
+      color: var(--green);
+    }
+
+    /* AI BREAKDOWN */
+    .ai-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 24px 26px;
+      margin-bottom: 20px;
+      animation: fadeIn 0.6s ease;
+    }
+
+    .ai-label {
+      font-size: 0.48rem;
+      letter-spacing: 0.15em;
+      color: var(--purple);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ai-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .ai-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--ink-mid);
+      line-height: 1.8;
+    }
+
+    .ai-text strong {
+      color: var(--ink);
+      font-weight: 400;
+    }
+
+    .ai-text code {
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--yellow);
+      background: var(--lift);
+      padding: 1px 5px;
+    }
+
+    /* LOADING */
+    .loading {
+      padding: 40px 0;
+      text-align: center;
+      color: var(--ink-dim);
+      font-size: 0.55rem;
+      letter-spacing: 0.12em;
+    }
+
+    .loading-bar {
+      width: 200px;
+      height: 2px;
+      background: var(--border);
+      margin: 16px auto 0;
+      overflow: hidden;
+    }
+
+    .loading-bar-inner {
+      height: 100%;
+      background: var(--cyan);
+      animation: loadSlide 1.4s ease-in-out infinite;
+    }
+
+    @keyframes loadSlide {
+      0% {
+        transform: translateX(-100%)
+      }
+
+      100% {
+        transform: translateX(200%)
+      }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border: 1px solid transparent;
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .empty {
+      padding: 60px 0;
+      text-align: center;
+      color: var(--ink-dim);
+    }
+
+    .empty-glyph {
+      font-size: 1.6rem;
+      margin-bottom: 12px;
+      opacity: 0.3;
+    }
+
+    .empty-msg {
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="topbar">
+    <div>
+      <span class="brand">BUNDLE WEIGHT</span>
+      <span class="brand-sub">npm cost explainer · by Noah S Hardy</span>
+    </div>
+  </div>
+
+  <div class="hero">
+    <h1 class="hero-title">What does <em>that package</em><br>actually cost?</h1>
+    <p class="hero-sub">Paste any npm package name. See its real bundle size, what's inside, why it's heavy, and whether
+      you should use it.</p>
+
+    <div class="search-bar">
+      <input class="pkg-input" id="pkgInput" type="text" placeholder="lodash, moment, axios, react..."
+        onkeydown="if(event.key==='Enter')analyze()">
+      <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
+        <span class="spinner" id="spinner" style="display:none"></span>
+        <span id="btnLabel">Analyze</span>
+      </button>
+    </div>
+
+    <div class="quick-picks">
+      <span style="font-size:0.46rem;color:var(--ink-dim);letter-spacing:0.1em;align-self:center">Try:</span>
+      <div class="qp" onclick="quick('lodash')">lodash</div>
+      <div class="qp" onclick="quick('moment')">moment</div>
+      <div class="qp" onclick="quick('axios')">axios</div>
+      <div class="qp" onclick="quick('date-fns')">date-fns</div>
+      <div class="qp" onclick="quick('react')">react</div>
+      <div class="qp" onclick="quick('uuid')">uuid</div>
+      <div class="qp" onclick="quick('chart.js')">chart.js</div>
+      <div class="qp" onclick="quick('zod')">zod</div>
+    </div>
+  </div>
+
+  <div class="results" id="results">
+    <div class="empty">
+      <div class="empty-glyph">◈</div>
+      <div class="empty-msg">Enter a package name above to begin</div>
+    </div>
+  </div>
+
+  <script>
+    // ── KNOWN SIZES (bundlephobia-style data, accurate approximations) ────────
+    const KNOWN = {
+      'lodash': { size: 531, gz: 69, ver: '4.17.21', deps: 0, treeshake: false },
+      'lodash-es': { size: 556, gz: 72, ver: '4.17.21', deps: 0, treeshake: true },
+      'moment': { size: 2401, gz: 304, ver: '2.30.1', deps: 0, treeshake: false },
+      'dayjs': { size: 84, gz: 23, ver: '1.11.10', deps: 0, treeshake: true },
+      'date-fns': { size: 205, gz: 55, ver: '3.3.1', deps: 0, treeshake: true },
+      'axios': { size: 59, gz: 22, ver: '1.6.7', deps: 0, treeshake: false },
+      'got': { size: 67, gz: 19, ver: '14.2.1', deps: 4, treeshake: false },
+      'node-fetch': { size: 25, gz: 8, ver: '3.3.2', deps: 1, treeshake: false },
+      'react': { size: 140, gz: 45, ver: '18.2.0', deps: 1, treeshake: false },
+      'react-dom': { size: 1040, gz: 142, ver: '18.2.0', deps: 2, treeshake: false },
+      'vue': { size: 474, gz: 87, ver: '3.4.21', deps: 5, treeshake: true },
+      'uuid': { size: 24, gz: 5, ver: '9.0.1', deps: 0, treeshake: true },
+      'nanoid': { size: 5, gz: 2, ver: '5.0.6', deps: 0, treeshake: true },
+      'zod': { size: 141, gz: 31, ver: '3.22.4', deps: 0, treeshake: true },
+      'yup': { size: 130, gz: 36, ver: '1.4.0', deps: 5, treeshake: true },
+      'chart.js': { size: 682, gz: 177, ver: '4.4.2', deps: 1, treeshake: true },
+      'd3': { size: 2506, gz: 568, ver: '7.9.0', deps: 28, treeshake: true },
+      'recharts': { size: 891, gz: 267, ver: '2.12.0', deps: 15, treeshake: true },
+      'classnames': { size: 1, gz: 0.7, ver: '2.5.1', deps: 0, treeshake: true },
+      'clsx': { size: 0.9, gz: 0.5, ver: '2.1.0', deps: 0, treeshake: true },
+      'immer': { size: 112, gz: 31, ver: '10.0.3', deps: 0, treeshake: true },
+      'zustand': { size: 13, gz: 5, ver: '4.5.2', deps: 0, treeshake: true },
+      'redux': { size: 29, gz: 9, ver: '5.0.1', deps: 0, treeshake: true },
+      'jotai': { size: 15, gz: 5, ver: '2.6.4', deps: 0, treeshake: true },
+      'ramda': { size: 2153, gz: 267, ver: '0.30.0', deps: 0, treeshake: false },
+      'fp-ts': { size: 648, gz: 124, ver: '2.16.4', deps: 0, treeshake: true },
+      'rxjs': { size: 1044, gz: 199, ver: '7.8.1', deps: 1, treeshake: true },
+      'highlight.js': { size: 1094, gz: 355, ver: '11.9.0', deps: 0, treeshake: false },
+      'prismjs': { size: 296, gz: 85, ver: '1.29.0', deps: 0, treeshake: false },
+      'marked': { size: 137, gz: 44, ver: '12.0.0', deps: 0, treeshake: false },
+      'dompurify': { size: 25, gz: 9, ver: '3.0.11', deps: 0, treeshake: false },
+    };
+
+    const ALTERNATIVES = {
+      'lodash': [{ name: 'lodash-es', size: 72, desc: 'ESM version, fully tree-shakeable' }, { name: 'just-X', size: 2, desc: 'Individual functions à la carte' }],
+      'moment': [{ name: 'dayjs', size: 23, desc: 'Moment-compatible API, 10× smaller' }, { name: 'date-fns', size: 55, desc: 'Functional, tree-shakeable date utils' }, { name: 'Temporal API', size: 0, desc: 'Native browser API, no dep needed' }],
+      'axios': [{ name: 'ky', size: 6, desc: 'Fetch wrapper, tiny and modern' }, { name: 'node-fetch', size: 8, desc: 'Minimal fetch polyfill' }, { name: 'native fetch', size: 0, desc: 'Built into every modern browser' }],
+      'react-dom': [{ name: 'preact', size: 4, desc: 'Identical API, 97% smaller' }, { name: 'solid-js', size: 19, desc: 'No virtual DOM, faster runtime' }],
+      'uuid': [{ name: 'nanoid', size: 2, desc: 'Shorter, faster, URL-safe IDs' }, { name: 'crypto.randomUUID()', size: 0, desc: 'Built into browsers & Node 14+' }],
+      'ramda': [{ name: 'remeda', size: 35, desc: 'TypeScript-first, tree-shakeable' }, { name: 'lodash-es', size: 72, desc: 'More familiar API, ES modules' }],
+      'd3': [{ name: 'd3-X submodule', size: 5, desc: 'Import only the module you need' }, { name: 'chart.js', size: 177, desc: 'Higher-level, less flexible' }],
+    };
+
+    const VERDICTS = [
+      { max: 5, label: 'Featherweight', color: '#4ec994', tip: 'Basically free. Use it without hesitation.' },
+      { max: 30, label: 'Lightweight', color: '#00AAAA', tip: 'Very reasonable. Good trade-off for most projects.' },
+      { max: 100, label: 'Moderate', color: '#c9a96e', tip: 'Acceptable, but consider if you\'re using most of it.' },
+      { max: 300, label: 'Heavy', color: '#d4845a', tip: 'Starting to feel it. Check if there\'s a leaner alternative.' },
+      { max: Infinity, label: 'Massive', color: '#e0786a', tip: 'Significant cost. Only justified if it\'s central to your app.' },
+    ];
+
+    function getVerdict(gzKb) {
+      return VERDICTS.find(v => gzKb <= v.max) || VERDICTS[VERDICTS.length - 1];
+    }
+
+    // Max ref sizes for bar charts (gzip kb)
+    const BAR_MAX = { slow3g: 100, cable: 500, lte: 300 };
+
+    function formatSize(kb) {
+      if (kb < 1) return `${(kb * 1000).toFixed(0)} B`;
+      if (kb >= 1000) return `${(kb / 1000).toFixed(1)} MB`;
+      return `${kb.toFixed(kb < 10 ? 1 : 0)} kB`;
+    }
+
+    function dlTime(gzKb, kbps) {
+      const ms = (gzKb / kbps) * 1000;
+      if (ms < 1000) return `${Math.round(ms)}ms`;
+      return `${(ms / 1000).toFixed(1)}s`;
+    }
+
+    // ── ANALYZE ──────────────────────────────────────────────────────────────────
+    async function analyze() {
+      const raw = document.getElementById('pkgInput').value.trim();
+      if (!raw) return;
+      const pkg = raw.toLowerCase().replace(/\s+/g, '');
+
+      const btn = document.getElementById('analyzeBtn');
+      const spinner = document.getElementById('spinner');
+      btn.disabled = true;
+      spinner.style.display = 'inline-block';
+      document.getElementById('btnLabel').textContent = 'Analyzing...';
+      document.getElementById('results').innerHTML = `
+    <div class="loading">
+      <div>Fetching bundle data for <strong style="color:var(--ink)">${pkg}</strong>...</div>
+      <div class="loading-bar"><div class="loading-bar-inner"></div></div>
+    </div>`;
+
+      // Use known data or fetch from bundlephobia API
+      let data = KNOWN[pkg];
+      if (!data) {
+        try {
+          // Try bundlephobia API
+          const res = await fetch(`https://bundlephobia.com/api/size?package=${encodeURIComponent(pkg)}`);
+          if (res.ok) {
+            const json = await res.json();
+            data = {
+              size: Math.round(json.size / 1024),
+              gz: Math.round(json.gzip / 1024),
+              ver: json.version,
+              deps: json.dependencyCount ?? 0,
+              treeshake: json.hasJSNextField || false,
+            };
+          }
+        } catch (e) { /* fallback to AI */ }
+      }
+
+      // Ask Claude to explain regardless
+      await renderWithAI(pkg, data);
+
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      document.getElementById('btnLabel').textContent = 'Analyze';
+    }
+
+    async function renderWithAI(pkg, data) {
+      const verdict = data ? getVerdict(data.gz) : null;
+
+      const prompt = data
+        ? `You are a JavaScript performance expert analyzing the npm package "${pkg}" (v${data.ver}).
+
+Known facts:
+- Minified size: ${data.size} kB
+- Gzipped size: ${data.gz} kB
+- Direct dependencies: ${data.deps}
+- Tree-shakeable: ${data.treeshake}
+
+Write a concise, expert analysis covering:
+1. What makes this package the size it is (what's actually inside it)
+2. Is this size justified given what it does?
+3. One or two specific things a developer should know about using it efficiently (e.g. "import only what you need", "avoid importing the whole package")
+4. A one-sentence bottom line verdict
+
+Write in the second person ("you"), keep it direct and practical. No fluff. Format as plain paragraphs, use **bold** for key terms and \`code\` for package/import names. Around 120 words total.`
+        : `You are a JavaScript performance expert. The user asked about npm package "${pkg}".
+
+First, state the approximate bundle size (minified + gzipped) as best you know.
+Then give a concise analysis: what it does, what makes it the size it is, whether it's worth it, and any efficiency tips.
+
+Format: plain paragraphs, **bold** for key terms, \`code\` for package names. ~120 words. Direct and practical.`;
+
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1000,
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
+        const json = await res.json();
+        const aiText = json.content?.map(c => c.text || '').join('') || '';
+        renderResults(pkg, data, aiText);
+      } catch (e) {
+        renderResults(pkg, data, null);
+      }
+    }
+
+    function renderResults(pkg, data, aiText) {
+      const out = document.getElementById('results');
+      const verdict = data ? getVerdict(data.gz) : { label: 'Unknown', color: '#4e4a62', tip: '' };
+
+      // Download times (gzip kb / kbps)
+      const gz = data?.gz ?? 0;
+      const dt3g = dlTime(gz, 50);    // slow 3G ~400kbps ÷ 8
+      const dtLTE = dlTime(gz, 1000);  // LTE ~8Mbps ÷ 8
+      const dtCable = dlTime(gz, 5000);  // cable
+
+      // Bar widths (capped)
+      const barW3g = data ? Math.min(100, (gz / 150) * 100).toFixed(1) : 0;
+      const barLTE = data ? Math.min(100, (gz / 500) * 100).toFixed(1) : 0;
+
+      const alts = ALTERNATIVES[pkg.toLowerCase()] || [];
+
+      let html = '';
+
+      // ── VERDICT BLOCK
+      if (data) {
+        html += `
+    <div class="verdict" style="--verdict-color:${verdict.color}">
+      <div class="verdict-top">
+        <div class="verdict-left">
+          <div class="verdict-name">${pkg}</div>
+          <div class="verdict-version">v${data.ver} · ${data.deps} direct dep${data.deps !== 1 ? 's' : ''} · ${data.treeshake ? 'tree-shakeable' : 'not tree-shakeable'}</div>
+          <div class="verdict-badge"><span class="verdict-badge-dot"></span>${verdict.label} — ${verdict.tip}</div>
+        </div>
+        <div class="size-blocks">
+          <div class="size-block">
+            <div class="size-val">${formatSize(data.size)}</div>
+            <div class="size-label">Minified</div>
+          </div>
+          <div class="size-block">
+            <div class="size-val gzip">${formatSize(data.gz)}</div>
+            <div class="size-label">Gzipped</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px">
+        <div class="bar-section">
+          <div class="bar-label-row">
+            <span class="bar-label">Slow 3G impact</span>
+            <span class="bar-label" style="color:var(--ink)">${dt3g}</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="width:${barW3g}%;background:${verdict.color}"></div></div>
+        </div>
+        <div class="bar-section" style="margin-top:12px">
+          <div class="bar-label-row">
+            <span class="bar-label">LTE / cable</span>
+            <span class="bar-label" style="color:var(--ink)">${dtLTE}</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="width:${barLTE}%;background:var(--green)"></div></div>
+        </div>
+      </div>
+
+      <div class="comparables">
+        <div class="comp-item">≈ <span>${Math.round(gz / 0.3)} lines of vanilla JS</span></div>
+        <div class="comp-item">≈ <span>${Math.round(gz / 7)} avg web images</span> at 1× quality</div>
+        ${gz > 10 ? `<div class="comp-item">Render blocks for <span>${dt3g}</span> on 3G</div>` : ''}
+      </div>
+    </div>`;
+      }
+
+      // ── AI BREAKDOWN
+      if (aiText) {
+        const htmlText = aiText
+          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+          .replace(/`([^`]+)`/g, '<code>$1</code>')
+          .replace(/\n\n/g, '</p><p>')
+          .replace(/\n/g, ' ');
+        html += `
+    <div class="ai-section">
+      <div class="ai-label">AI Analysis</div>
+      <div class="ai-text"><p>${htmlText}</p></div>
+    </div>`;
+      }
+
+      // ── INFO CARDS
+      if (data) {
+        html += `<div class="cards">`;
+
+        html += `
+    <div class="card">
+      <div class="card-title">Tree Shaking</div>
+      <div class="card-body">
+        ${data.treeshake
+            ? `<strong>Supported.</strong> You can import only what you use — <code>import { fn } from '${pkg}'</code> — and your bundler will drop the rest. This is the right way to use it.`
+            : `<strong>Not supported.</strong> Importing <em>anything</em> from <code>${pkg}</code> pulls in the entire bundle. Consider importing from specific sub-paths if available.`
+          }
+      </div>
+    </div>`;
+
+        html += `
+    <div class="card">
+      <div class="card-title">Dependencies</div>
+      <div class="card-body">
+        ${data.deps === 0
+            ? `<strong>Zero dependencies.</strong> The size you see is exactly what you get — no hidden weight from transitive packages.`
+            : `<strong>${data.deps} direct dep${data.deps !== 1 ? 's' : ''}.</strong> The actual install may be larger. Run <code>npm ls ${pkg}</code> to see the full tree.`
+          }
+      </div>
+    </div>`;
+
+        html += `</div>`;
+      }
+
+      // ── ALTERNATIVES
+      if (alts.length) {
+        html += `<div class="ai-label" style="margin-bottom:12px;font-size:0.48rem;letter-spacing:0.15em;color:var(--cyan);text-transform:uppercase;display:flex;align-items:center;gap:8px">Lighter Alternatives <span style="flex:1;height:1px;background:var(--border);display:block"></span></div>`;
+        html += `<div class="alts">`;
+        alts.forEach(alt => {
+          const saving = data ? Math.round((1 - alt.size / data.gz) * 100) : null;
+          html += `
+      <div class="alt-item" onclick="quick('${alt.name.split(' ')[0]}')">
+        <div>
+          <div class="alt-name">${alt.name}</div>
+          <div class="alt-desc">${alt.desc}</div>
+        </div>
+        <div style="text-align:right">
+          ${alt.size === 0
+              ? `<div class="alt-size">0 kB</div><div class="alt-savings">native</div>`
+              : `<div class="alt-size">${alt.size} kB gz</div>
+               ${saving && saving > 0 ? `<div class="alt-savings">−${saving}% smaller</div>` : ''}`
+            }
+        </div>
+      </div>`;
+        });
+        html += `</div>`;
+      }
+
+      if (!data && !aiText) {
+        html = `<div class="empty"><div class="empty-glyph">?</div><div class="empty-msg">Could not find data for "${pkg}". Check the spelling.</div></div>`;
+      }
+
+      out.innerHTML = html;
+    }
+
+    function quick(pkg) {
+      document.getElementById('pkgInput').value = pkg;
+      analyze();
+    }
+  </script>
+</body>
+
+</html>

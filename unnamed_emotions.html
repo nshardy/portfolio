@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Lexicon of Unnamed Feelings</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Martian+Mono:wght@200;300&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0d0d10;
+      --surface: #13131a;
+      --mist: #1e1e2e;
+      --ink: #e8e3da;
+      --ink-dim: #7a7472;
+      --accent1: #c9a96e;
+      --accent2: #7eb8c9;
+      --accent3: #b07fa6;
+      --accent4: #8ecf9a;
+      --accent5: #e0786a;
+      --accent6: #9a96d4;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* GRAIN OVERLAY */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.4;
+    }
+
+    header {
+      padding: 80px 60px 40px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      color: var(--ink-dim);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fadeUp 1s ease forwards 0.2s;
+    }
+
+    h1 {
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 300;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+      opacity: 0;
+      animation: fadeUp 1.2s ease forwards 0.5s;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--accent1);
+    }
+
+    .subtitle {
+      font-size: 1.15rem;
+      font-weight: 300;
+      color: var(--ink-dim);
+      font-style: italic;
+      line-height: 1.6;
+      max-width: 520px;
+      opacity: 0;
+      animation: fadeUp 1s ease forwards 0.8s;
+    }
+
+    .divider {
+      width: 60px;
+      height: 1px;
+      background: var(--ink-dim);
+      opacity: 0.3;
+      margin: 50px auto 60px;
+    }
+
+    /* GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 2px;
+      padding: 0 2px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .card {
+      position: relative;
+      background: var(--surface);
+      padding: 44px 40px 48px;
+      cursor: pointer;
+      overflow: hidden;
+      transition: background 0.4s ease;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.8s ease forwards;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--card-color);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .card:hover::before {
+      opacity: 0.06;
+    }
+
+    .card:hover .shape-container svg {
+      transform: scale(1.08) rotate(3deg);
+    }
+
+    .card-number {
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.55rem;
+      color: var(--ink-dim);
+      letter-spacing: 0.15em;
+      margin-bottom: 32px;
+      opacity: 0.6;
+    }
+
+    .shape-container {
+      margin-bottom: 32px;
+      height: 90px;
+      display: flex;
+      align-items: center;
+    }
+
+    .shape-container svg {
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .emotion-name {
+      font-size: 1.65rem;
+      font-weight: 300;
+      letter-spacing: -0.01em;
+      margin-bottom: 10px;
+      color: var(--card-color);
+    }
+
+    .emotion-tag {
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.58rem;
+      color: var(--ink-dim);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .emotion-desc {
+      font-size: 1.02rem;
+      font-weight: 300;
+      line-height: 1.7;
+      color: rgba(232, 227, 218, 0.72);
+      font-style: italic;
+    }
+
+    .visual-key {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .key-tag {
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.52rem;
+      letter-spacing: 0.1em;
+      padding: 4px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--ink-dim);
+      border-radius: 2px;
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 13, 16, 0.92);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      padding: 24px;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      max-width: 680px;
+      width: 100%;
+      padding: 60px;
+      position: relative;
+      transform: translateY(30px) scale(0.97);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal-overlay.active .modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 24px;
+      right: 28px;
+      background: none;
+      border: none;
+      color: var(--ink-dim);
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      padding: 8px;
+      transition: color 0.3s;
+    }
+
+    .modal-close:hover {
+      color: var(--ink);
+    }
+
+    .modal-shape {
+      margin-bottom: 36px;
+    }
+
+    .modal-name {
+      font-size: 2.8rem;
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .modal-subtitle {
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--ink-dim);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+
+    .modal-desc {
+      font-size: 1.15rem;
+      font-style: italic;
+      line-height: 1.8;
+      color: rgba(232, 227, 218, 0.8);
+      margin-bottom: 28px;
+    }
+
+    .modal-context {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: rgba(232, 227, 218, 0.55);
+      border-left: 2px solid rgba(255, 255, 255, 0.1);
+      padding-left: 20px;
+    }
+
+    .modal-keys {
+      margin-top: 32px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .modal-key {
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      border: 1px solid;
+      border-radius: 2px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 80px 40px;
+      font-style: italic;
+      color: var(--ink-dim);
+      font-size: 0.95rem;
+      opacity: 0.6;
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 50px 28px 30px;
+      }
+
+      .modal {
+        padding: 36px 28px;
+      }
+
+      .modal-name {
+        font-size: 2rem;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <p class="eyebrow">A Visual Lexicon · Vol. I</p>
+    <h1>The <em>Unnamed</em><br>Feelings</h1>
+    <p class="subtitle">Emotions that slip through language — given form, colour, and geometry for the first time.</p>
+  </header>
+
+  <div class="divider"></div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <button class="modal-close" onclick="closeModal()">[ close ]</button>
+      <div class="modal-shape" id="modalShape"></div>
+      <div class="modal-name" id="modalName"></div>
+      <div class="modal-subtitle" id="modalSubtitle"></div>
+      <div class="modal-desc" id="modalDesc"></div>
+      <div class="modal-context" id="modalContext"></div>
+      <div class="modal-keys" id="modalKeys"></div>
+    </div>
+  </div>
+
+  <footer>Click any feeling to open it fully &nbsp;·&nbsp; These sensations have always existed — they were simply
+    waiting for a shape.</footer>
+
+  <script>
+    const emotions = [
+      {
+        name: "Velouria",
+        tag: "temporal · nostalgic",
+        color: "#c9a96e",
+        desc: "The bittersweet awareness that a perfect moment is already becoming a memory while it is still happening.",
+        context: "You are laughing at a table with people you love, and somewhere in the laughter, you feel the ghost of the memory you are currently making. The present and the nostalgia for it exist simultaneously.",
+        keys: ["present-tense grief", "temporal doubling", "joyful ache"],
+        shapeType: "overlap",
+        shape: `<svg width="90" height="90" viewBox="0 0 90 90" fill="none">
+      <circle cx="32" cy="45" r="26" stroke="#c9a96e" stroke-width="1.2" fill="rgba(201,169,110,0.05)"/>
+      <circle cx="58" cy="45" r="26" stroke="#c9a96e" stroke-width="1.2" fill="rgba(201,169,110,0.05)" opacity="0.5"/>
+      <circle cx="45" cy="45" r="8" fill="#c9a96e" opacity="0.2"/>
+    </svg>`
+      },
+      {
+        name: "Drossil",
+        tag: "relational · liminal",
+        color: "#7eb8c9",
+        desc: "The invisible weight of unasked questions between two people who care for each other.",
+        context: "A long silence in a car with someone you love. Neither of you speaks, not out of anger, but because the questions are too large and the moment too fragile. The unsaid hangs like weather.",
+        keys: ["intimate silence", "suspended tension", "protective withholding"],
+        shapeType: "gap",
+        shape: `<svg width="90" height="90" viewBox="0 0 90 90" fill="none">
+      <line x1="10" y1="32" x2="36" y2="32" stroke="#7eb8c9" stroke-width="1.2"/>
+      <line x1="54" y1="32" x2="80" y2="32" stroke="#7eb8c9" stroke-width="1.2"/>
+      <line x1="10" y1="45" x2="36" y2="45" stroke="#7eb8c9" stroke-width="1.2"/>
+      <line x1="54" y1="45" x2="80" y2="45" stroke="#7eb8c9" stroke-width="1.2"/>
+      <line x1="10" y1="58" x2="36" y2="58" stroke="#7eb8c9" stroke-width="1.2"/>
+      <line x1="54" y1="58" x2="80" y2="58" stroke="#7eb8c9" stroke-width="1.2"/>
+      <circle cx="45" cy="45" r="5" stroke="#7eb8c9" stroke-width="1" fill="none" opacity="0.5"/>
+    </svg>`
+      },
+      {
+        name: "Mourne-light",
+        tag: "environmental · quiet",
+        color: "#8ecf9a",
+        desc: "The specific peace that comes from rain on a window when you have nowhere to be.",
+        context: "Not happiness, not sadness — something older and more neutral. A permission to exist without productivity. The rain makes the stillness feel earned.",
+        keys: ["earned stillness", "atmospheric consent", "minor key comfort"],
+        shapeType: "rain",
+        shape: `<svg width="90" height="90" viewBox="0 0 90 90" fill="none">
+      <rect x="20" y="18" width="50" height="32" rx="2" stroke="#8ecf9a" stroke-width="1.2" fill="rgba(142,207,154,0.04)"/>
+      <line x1="30" y1="58" x2="26" y2="75" stroke="#8ecf9a" stroke-width="1" opacity="0.4"/>
+      <line x1="45" y1="58" x2="41" y2="75" stroke="#8ecf9a" stroke-width="1" opacity="0.4"/>
+      <line x1="60" y1="58" x2="56" y2="75" stroke="#8ecf9a" stroke-width="1" opacity="0.4"/>
+      <line x1="37" y1="58" x2="33" y2="75" stroke="#8ecf9a" stroke-width="0.6" opacity="0.25"/>
+      <line x1="52" y1="58" x2="48" y2="75" stroke="#8ecf9a" stroke-width="0.6" opacity="0.25"/>
+    </svg>`
+      },
+      {
+        name: "Solenne",
+        tag: "social · affective",
+        color: "#b07fa6",
+        desc: "A sudden rush of love for a stranger — not romantic, not platonic, but something wider: brief, total, unaddressable.",
+        context: "An old man carefully arranges flowers at a market stall. A child speaks to a pigeon with complete seriousness. You are overwhelmed. It passes. It mattered.",
+        keys: ["anonymous tenderness", "non-relational love", "fleeting witness"],
+        shapeType: "burst",
+        shape: `<svg width="90" height="90" viewBox="0 0 90 90" fill="none">
+      <circle cx="45" cy="45" r="8" fill="rgba(176,127,166,0.2)" stroke="#b07fa6" stroke-width="1.2"/>
+      <line x1="45" y1="12" x2="45" y2="28" stroke="#b07fa6" stroke-width="1" opacity="0.5"/>
+      <line x1="45" y1="62" x2="45" y2="78" stroke="#b07fa6" stroke-width="1" opacity="0.5"/>
+      <line x1="12" y1="45" x2="28" y2="45" stroke="#b07fa6" stroke-width="1" opacity="0.5"/>
+      <line x1="62" y1="45" x2="78" y2="45" stroke="#b07fa6" stroke-width="1" opacity="0.5"/>
+      <line x1="22" y1="22" x2="33" y2="33" stroke="#b07fa6" stroke-width="1" opacity="0.3"/>
+      <line x1="57" y1="57" x2="68" y2="68" stroke="#b07fa6" stroke-width="1" opacity="0.3"/>
+      <line x1="68" y1="22" x2="57" y2="33" stroke="#b07fa6" stroke-width="1" opacity="0.3"/>
+      <line x1="22" y1="68" x2="33" y2="57" stroke="#b07fa6" stroke-width="1" opacity="0.3"/>
+    </svg>`
+      },
+      {
+        name: "Havre",
+        tag: "cognitive · ambient",
+        color: "#9a96d4",
+        desc: "The eerie calm of a mind that has been worrying so long it has simply — stopped.",
+        context: "After months of anxiety about something, the worry simply fails to load one morning. No resolution, no peace, just absence. You prod the wound and find it numb. You don't know whether to be relieved or afraid.",
+        keys: ["exhausted neutrality", "worry-void", "suspended dread"],
+        shapeType: "flat",
+        shape: `<svg width="90" height="90" viewBox="0 0 90 90" fill="none">
+      <rect x="15" y="40" width="60" height="10" rx="1" stroke="#9a96d4" stroke-width="1.2" fill="rgba(154,150,212,0.06)"/>
+      <rect x="25" y="43" width="40" height="4" rx="1" fill="rgba(154,150,212,0.12)"/>
+      <line x1="45" y1="20" x2="45" y2="38" stroke="#9a96d4" stroke-width="0.8" opacity="0.3" stroke-dasharray="2 3"/>
+      <line x1="45" y1="52" x2="45" y2="70" stroke="#9a96d4" stroke-width="0.8" opacity="0.3" stroke-dasharray="2 3"/>
+    </svg>`
+      },
+      {
+        name: "Crepuscine",
+        tag: "existential · recursive",
+        color: "#e0786a",
+        desc: "The vertigo of realising you are the only person who has ever experienced your exact inner life.",
+        context: "A sudden awareness, usually in a crowd, that every face contains an entire universe of sensation, and yours is sealed from theirs. Not loneliness — something more precise. More structural.",
+        keys: ["consciousness vertigo", "sealed selfhood", "crowd isolation"],
+        shapeType: "recursive",
+        shape: `<svg width="90" height="90" viewBox="0 0 90 90" fill="none">
+      <rect x="10" y="10" width="70" height="70" rx="2" stroke="#e0786a" stroke-width="1.2" fill="none" opacity="0.8"/>
+      <rect x="22" y="22" width="46" height="46" rx="2" stroke="#e0786a" stroke-width="1" fill="none" opacity="0.5"/>
+      <rect x="34" y="34" width="22" height="22" rx="2" stroke="#e0786a" stroke-width="0.8" fill="none" opacity="0.3"/>
+      <rect x="42" y="42" width="6" height="6" rx="1" fill="#e0786a" opacity="0.4"/>
+    </svg>`
+      },
+      {
+        name: "Silt",
+        tag: "affective · accumulative",
+        color: "#c9a96e",
+        desc: "The gentle heaviness of a day that held too many small emotions to name or process.",
+        context: "Nothing catastrophic happened. There was just too much — small kindnesses, small irritations, beautiful things, ugly ones. By evening you are full, sediment-heavy, and all you can do is sit.",
+        keys: ["emotional density", "unnamed accumulation", "processing lag"],
+        shapeType: "layers",
+        shape: `<svg width="90" height="90" viewBox="0 0 90 90" fill="none">
+      <rect x="12" y="62" width="66" height="8" rx="1" fill="rgba(201,169,110,0.22)" stroke="#c9a96e" stroke-width="1"/>
+      <rect x="18" y="52" width="54" height="8" rx="1" fill="rgba(201,169,110,0.15)" stroke="#c9a96e" stroke-width="0.9" opacity="0.8"/>
+      <rect x="26" y="42" width="38" height="8" rx="1" fill="rgba(201,169,110,0.1)" stroke="#c9a96e" stroke-width="0.8" opacity="0.6"/>
+      <rect x="34" y="32" width="22" height="8" rx="1" fill="rgba(201,169,110,0.06)" stroke="#c9a96e" stroke-width="0.6" opacity="0.4"/>
+    </svg>`
+      },
+      {
+        name: "Vespering",
+        tag: "temporal · wistful",
+        color: "#7eb8c9",
+        desc: "The strange grief that comes at the end of something good — not because it ended, but because you know now it will always have ended.",
+        context: "The last evening of a holiday, a long meal finishing, the closing credits of a story that mattered to you. The sadness arrives before the ending does. It is a grief for the permanent past tense.",
+        keys: ["pre-emptive mourning", "tense grief", "permanence ache"],
+        shapeType: "sunset",
+        shape: `<svg width="90" height="90" viewBox="0 0 90 90" fill="none">
+      <path d="M10 68 Q45 20 80 68" stroke="#7eb8c9" stroke-width="1.2" fill="rgba(126,184,201,0.05)"/>
+      <line x1="10" y1="68" x2="80" y2="68" stroke="#7eb8c9" stroke-width="1" opacity="0.4"/>
+      <circle cx="45" cy="68" r="14" stroke="#7eb8c9" stroke-width="1" fill="none" stroke-dasharray="3 4" opacity="0.4"/>
+    </svg>`
+      },
+      {
+        name: "Lumen-hush",
+        tag: "perceptual · sacred",
+        color: "#8ecf9a",
+        desc: "The sudden, sourceless sense that the world is momentarily paying attention to itself.",
+        context: "Light through leaves at a specific angle. The way traffic sounds at 5am. Something shifts, and for a few seconds the ordinary world seems to be watching itself with great interest. You are a witness to the witnessing.",
+        keys: ["world-presence", "perceptual sacred", "attention without cause"],
+        shapeType: "light",
+        shape: `<svg width="90" height="90" viewBox="0 0 90 90" fill="none">
+      <circle cx="45" cy="45" r="4" fill="#8ecf9a" opacity="0.6"/>
+      <circle cx="45" cy="45" r="12" stroke="#8ecf9a" stroke-width="0.8" fill="none" opacity="0.4"/>
+      <circle cx="45" cy="45" r="22" stroke="#8ecf9a" stroke-width="0.6" fill="none" opacity="0.25"/>
+      <circle cx="45" cy="45" r="34" stroke="#8ecf9a" stroke-width="0.4" fill="none" opacity="0.12"/>
+      <line x1="45" y1="8" x2="45" y2="18" stroke="#8ecf9a" stroke-width="0.8" opacity="0.4"/>
+      <line x1="45" y1="72" x2="45" y2="82" stroke="#8ecf9a" stroke-width="0.8" opacity="0.4"/>
+      <line x1="8" y1="45" x2="18" y2="45" stroke="#8ecf9a" stroke-width="0.8" opacity="0.4"/>
+      <line x1="72" y1="45" x2="82" y2="45" stroke="#8ecf9a" stroke-width="0.8" opacity="0.4"/>
+    </svg>`
+      },
+    ];
+
+    const grid = document.getElementById('grid');
+
+    emotions.forEach((e, i) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.setProperty('--card-color', e.color);
+      card.style.animationDelay = `${0.1 + i * 0.08}s`;
+      card.innerHTML = `
+    <div class="card-number">${String(i + 1).padStart(2, '0')}</div>
+    <div class="shape-container">${e.shape}</div>
+    <div class="emotion-name">${e.name}</div>
+    <div class="emotion-tag">${e.tag}</div>
+    <div class="emotion-desc">${e.desc}</div>
+    <div class="visual-key">
+      ${e.keys.map(k => `<span class="key-tag">${k}</span>`).join('')}
+    </div>
+  `;
+      card.addEventListener('click', () => openModal(e));
+      grid.appendChild(card);
+    });
+
+    function openModal(e) {
+      document.getElementById('modalShape').innerHTML = e.shape.replace(/width="90" height="90"/, 'width="120" height="120"');
+      document.getElementById('modalName').textContent = e.name;
+      document.getElementById('modalName').style.color = e.color;
+      document.getElementById('modalSubtitle').textContent = e.tag;
+      document.getElementById('modalDesc').textContent = e.desc;
+      document.getElementById('modalContext').textContent = e.context;
+      document.getElementById('modalKeys').innerHTML = e.keys.map(k =>
+        `<span class="modal-key" style="color:${e.color};border-color:${e.color}33">${k}</span>`
+      ).join('');
+      document.getElementById('modalOverlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('modalOverlay').addEventListener('click', function (e) {
+      if (e.target === this) closeModal();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeModal();
+    });
+  </script>
+</body>
+
+</html>

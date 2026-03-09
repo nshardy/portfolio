@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SILT — a language by Noah S Hardy</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Martian+Mono:wght@200;300;400&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0b0b12;
+      --surface: #10101a;
+      --lift: #16162a;
+      --border: rgba(255, 255, 255, 0.07);
+      --ink: #dcd8f0;
+      --ink-mid: #8a859e;
+      --ink-dim: #4e4a62;
+      --cyan: #00AAAA;
+      --purple: #8b7fcf;
+      --green: #4ec994;
+      --red: #e0786a;
+      --yellow: #c9a96e;
+      --orange: #d4845a;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Martian Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.35;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    }
+
+    /* TOP BAR */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 52px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      background: var(--surface);
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .lang-name {
+      font-size: 0.75rem;
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      color: var(--cyan);
+    }
+
+    .lang-version {
+      font-size: 0.52rem;
+      color: var(--ink-dim);
+      letter-spacing: 0.1em;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-run {
+      background: var(--cyan);
+      color: var(--bg);
+      border: none;
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.14em;
+      padding: 8px 20px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, outline 0.2s;
+      text-transform: uppercase;
+    }
+
+    .btn-run:hover {
+      background: transparent;
+      color: var(--cyan);
+      outline: 1px solid var(--cyan);
+    }
+
+    .btn-clear {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--ink-dim);
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.12em;
+      padding: 7px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+
+    .btn-clear:hover {
+      border-color: var(--ink-mid);
+      color: var(--ink);
+    }
+
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 270px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+      overflow-y: auto;
+      padding: 20px 0;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: var(--border);
+    }
+
+    .sidebar-section {
+      margin-bottom: 24px;
+    }
+
+    .sidebar-heading {
+      font-size: 0.46rem;
+      letter-spacing: 0.2em;
+      color: var(--cyan);
+      text-transform: uppercase;
+      padding: 0 18px 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+
+    .doc-item {
+      padding: 7px 18px;
+      font-size: 0.54rem;
+      color: var(--ink-mid);
+      letter-spacing: 0.04em;
+      line-height: 1.6;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .doc-item:hover {
+      background: var(--lift);
+      color: var(--ink);
+    }
+
+    .doc-item code {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 0.6rem;
+    }
+
+    .doc-item code .kw {
+      color: var(--purple);
+    }
+
+    .doc-item code .var {
+      color: var(--cyan);
+    }
+
+    .doc-item code .fn {
+      color: var(--yellow);
+    }
+
+    .doc-item code .str {
+      color: var(--green);
+    }
+
+    .doc-item code .num {
+      color: var(--orange);
+    }
+
+    .doc-item span {
+      color: var(--ink-dim);
+      font-size: 0.48rem;
+    }
+
+    /* EDITOR PANE */
+    .editor-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .pane-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .tab {
+      font-size: 0.52rem;
+      letter-spacing: 0.12em;
+      color: var(--ink-dim);
+      padding: 10px 20px;
+      border-right: 1px solid var(--border);
+      cursor: pointer;
+      text-transform: uppercase;
+      position: relative;
+    }
+
+    .tab.active {
+      color: var(--ink);
+    }
+
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--cyan);
+    }
+
+    .editor-area {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .line-numbers {
+      width: 44px;
+      flex-shrink: 0;
+      padding: 20px 0;
+      text-align: right;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .line-num {
+      display: block;
+      font-size: 0.52rem;
+      color: var(--ink-dim);
+      line-height: 1.7rem;
+      padding-right: 12px;
+    }
+
+    /* HIGHLIGHTED EDITOR — overlay technique */
+    .editor-wrapper {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    #editor,
+    #highlight {
+      position: absolute;
+      inset: 0;
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.72rem;
+      line-height: 1.7rem;
+      padding: 20px 20px 20px 16px;
+      white-space: pre;
+      overflow: auto;
+      tab-size: 2;
+      margin: 0;
+      border: none;
+      outline: none;
+      word-wrap: normal;
+      overflow-wrap: normal;
+    }
+
+    #highlight {
+      pointer-events: none;
+      background: transparent;
+      color: var(--ink);
+      z-index: 3;
+    }
+
+    #editor {
+      background: transparent;
+      color: transparent;
+      caret-color: var(--cyan);
+      resize: none;
+      z-index: 2;
+      -webkit-text-fill-color: transparent;
+    }
+
+    #editor::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    #editor::-webkit-scrollbar-thumb {
+      background: var(--border);
+    }
+
+    #editor::selection {
+      background: rgba(0, 170, 170, 0.25);
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* syntax highlight token colors */
+    .t-kw {
+      color: var(--purple);
+    }
+
+    /* forge yield done check alter loop from upto as burn give */
+    .t-var {
+      color: var(--cyan);
+    }
+
+    /* @name */
+    .t-fn {
+      color: var(--yellow);
+    }
+
+    /* @fnName (call) */
+    .t-str {
+      color: var(--green);
+    }
+
+    .t-num {
+      color: var(--orange);
+    }
+
+    .t-op {
+      color: var(--ink-mid);
+    }
+
+    .t-com {
+      color: var(--ink-dim);
+      font-style: italic;
+    }
+
+    .t-bi {
+      color: #d4845a;
+    }
+
+    /* builtins */
+
+    /* OUTPUT */
+    .output-pane {
+      width: 360px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .output-label {
+      font-size: 0.5rem;
+      letter-spacing: 0.15em;
+      color: var(--ink-dim);
+      text-transform: uppercase;
+    }
+
+    .output-status {
+      font-size: 0.5rem;
+      letter-spacing: 0.1em;
+    }
+
+    .output-status.ok {
+      color: var(--green);
+    }
+
+    .output-status.err {
+      color: var(--red);
+    }
+
+    .output-status.idle {
+      color: var(--ink-dim);
+    }
+
+    #output {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      font-size: 0.68rem;
+      line-height: 1.7;
+      background: var(--bg);
+    }
+
+    #output::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    #output::-webkit-scrollbar-thumb {
+      background: var(--border);
+    }
+
+    .out-line {
+      display: block;
+      margin-bottom: 1px;
+    }
+
+    .out-print {
+      color: var(--ink);
+    }
+
+    .out-error {
+      color: var(--red);
+    }
+
+    .out-info {
+      color: var(--ink-dim);
+      font-style: italic;
+    }
+
+    /* EXAMPLES BAR */
+    .examples-bar {
+      display: flex;
+      gap: 8px;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      overflow-x: auto;
+    }
+
+    .examples-bar::-webkit-scrollbar {
+      height: 2px;
+    }
+
+    .example-pill {
+      font-size: 0.48rem;
+      letter-spacing: 0.1em;
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      color: var(--ink-dim);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .example-pill:hover {
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+
+    /* STATUS BAR */
+    .statusbar {
+      height: 26px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 0 16px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      font-size: 0.46rem;
+      letter-spacing: 0.12em;
+      color: var(--ink-dim);
+      text-transform: uppercase;
+    }
+
+    .status-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--green);
+      display: inline-block;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="lang-name">SILT</span>
+      <span class="lang-version">v2.1 · by Noah S Hardy</span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-clear" onclick="clearOutput()">Clear</button>
+      <button class="btn-run" onclick="runCode()">▶ Run</button>
+    </div>
+  </div>
+
+  <div class="workspace">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-heading">Variables</div>
+        <div class="doc-item" onclick="ins('set @x = 10\n')">
+          <code><span class="kw">set</span> <span class="var">@name</span> = value</code>
+          <span>declare a variable</span>
+        </div>
+        <div class="doc-item" onclick="ins('set @name = &quot;hello&quot;\n')">
+          <code><span class="kw">set</span> <span class="var">@name</span> = <span class="str">"string"</span></code>
+          <span>string variable</span>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-heading">Output</div>
+        <div class="doc-item" onclick="ins('say &quot;hello world&quot;\n')">
+          <code><span class="kw">say</span> <span class="str">"value"</span></code>
+          <span>print to output</span>
+        </div>
+        <div class="doc-item" onclick="ins('say &quot;x = &quot; .. @x\n')">
+          <code><span class="kw">say</span> <span class="str">"x = "</span> .. <span class="var">@x</span></code>
+          <span>.. concatenates strings</span>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-heading">Math</div>
+        <div class="doc-item" onclick="ins('set @r = (4 + 2) * 3\n')">
+          <code><span class="op">+ - * / %</span></code>
+          <span>arithmetic</span>
+        </div>
+        <div class="doc-item" onclick="ins('set @r = @sqrt 16\n')">
+          <code><span class="var">@sqrt</span> x &nbsp; <span class="var">@abs</span> x</code>
+          <span>math builtins</span>
+        </div>
+        <div class="doc-item" onclick="ins('set @r = @floor 3.7\n')">
+          <code><span class="var">@floor</span> x &nbsp; <span class="var">@ceil</span> x</code>
+          <span>rounding</span>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-heading">Conditionals</div>
+        <div class="doc-item" onclick="ins('check @x > 5\n  say &quot;big&quot;\ndone\n')">
+          <code><span class="kw">check</span> cond ... <span class="kw">done</span></code>
+          <span>if block</span>
+        </div>
+        <div class="doc-item"
+          onclick="ins('check @x > 5\n  say &quot;big&quot;\nalter\n  say &quot;small&quot;\ndone\n')">
+          <code><span class="kw">check</span> ... <span class="kw">alter</span> ... <span class="kw">done</span></code>
+          <span>if / else</span>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-heading">Loops</div>
+        <div class="doc-item" onclick="ins('burn 5\n  say &quot;hello&quot;\ndone\n')">
+          <code><span class="kw">burn</span> N ... <span class="kw">done</span></code>
+          <span>repeat N times</span>
+        </div>
+        <div class="doc-item" onclick="ins('loop @x > 0\n  say @x\n  set @x = @x - 1\ndone\n')">
+          <code><span class="kw">loop</span> cond ... <span class="kw">done</span></code>
+          <span>while loop</span>
+        </div>
+        <div class="doc-item" onclick="ins('from 1 upto 5 as @i\n  say @i\ndone\n')">
+          <code><span class="kw">from</span> A <span class="kw">upto</span> B <span class="kw">as</span> <span class="var">@i</span></code>
+          <span>range loop</span>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-heading">Functions</div>
+        <div class="doc-item"
+          onclick="ins('forge greet @name\n  say &quot;hello &quot; .. @name\ndone\n\n@greet &quot;world&quot;\n')">
+          <code><span class="kw">forge</span> name <span class="var">@args</span> ... <span class="kw">done</span></code>
+          <span>define a function</span>
+        </div>
+        <div class="doc-item" onclick="ins('forge double @x\n  yield @x * 2\ndone\n\nset @r = @double 5\nsay @r\n')">
+          <code><span class="kw">yield</span> value</code>
+          <span>return a value</span>
+        </div>
+        <div class="doc-item" onclick="ins('@myFn arg1 arg2\n')">
+          <code><span class="var">@fnName</span> arg1 arg2</code>
+          <span>call a function</span>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-heading">Strings</div>
+        <div class="doc-item" onclick="ins('set @s = @upper &quot;hello&quot;\n')">
+          <code><span class="var">@upper</span> s &nbsp; <span class="var">@lower</span> s</code>
+          <span>case conversion</span>
+        </div>
+        <div class="doc-item" onclick="ins('set @n = @len &quot;hello&quot;\n')">
+          <code><span class="var">@len</span> s</code>
+          <span>string length</span>
+        </div>
+        <div class="doc-item" onclick="ins('set @s = @trim &quot;  hi  &quot;\n')">
+          <code><span class="var">@trim</span> s</code>
+          <span>strip whitespace</span>
+        </div>
+        <div class="doc-item"
+          onclick="ins('set @s = @swap &quot;hi world&quot; &quot;world&quot; &quot;there&quot;\n')">
+          <code><span class="var">@swap</span> s from to</code>
+          <span>string replace</span>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-heading">Structs</div>
+        <div class="doc-item" onclick="ins('struct Point {\n  x: int\n  y: int\n}\n')">
+          <code><span class="kw">struct</span> Name { field: type }</code>
+          <span>define a struct</span>
+        </div>
+        <div class="doc-item" onclick="ins('let p := Point { x: 1, y: 2 }\n')">
+          <code><span class="kw">let</span> p := Name { field: val }</code>
+          <span>create an instance</span>
+        </div>
+        <div class="doc-item" onclick="ins('say p.x\n')">
+          <code>p.field</code>
+          <span>read a field</span>
+        </div>
+        <div class="doc-item" onclick="ins('p.x = 10\n')">
+          <code>p.field = value</code>
+          <span>mutate a field</span>
+        </div>
+        <div class="doc-item" onclick="ins('print(`x is {p.x}`)\n')">
+          <code><span class="kw">print</span>(<span class="str">"{p.field}"</span>)</code>
+          <span>string interpolation</span>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-heading">Operators</div>
+        <div class="doc-item">
+          <code><span class="op">== != &lt; &gt; &lt;= &gt;=</span></code>
+          <span>comparison</span>
+        </div>
+        <div class="doc-item">
+          <code><span class="kw">and &nbsp; or &nbsp; not</span></code>
+          <span>logical</span>
+        </div>
+        <div class="doc-item">
+          <code><span class="op">..</span></code>
+          <span>string concatenation</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDITOR PANE -->
+    <div class="editor-pane">
+      <div class="pane-tabs">
+        <div class="tab active">main.silt</div>
+      </div>
+      <div class="examples-bar">
+        <span class="example-pill" onclick="loadExample('hello')">Hello World</span>
+        <span class="example-pill" onclick="loadExample('fizzbuzz')">FizzBuzz</span>
+        <span class="example-pill" onclick="loadExample('fibonacci')">Fibonacci</span>
+        <span class="example-pill" onclick="loadExample('functions')">Functions</span>
+        <span class="example-pill" onclick="loadExample('strings')">Strings</span>
+        <span class="example-pill" onclick="loadExample('collatz')">Collatz</span>
+        <span class="example-pill" onclick="loadExample('structs')">Structs</span>
+      </div>
+      <div class="editor-area">
+        <div class="line-numbers" id="lineNumbers"></div>
+        <div class="editor-wrapper">
+          <div class="editor-bg"></div>
+          <pre id="highlight" aria-hidden="true"></pre>
+          <textarea id="editor" spellcheck="false" autocorrect="off" autocapitalize="off" onkeydown="handleKey(event)"
+            oninput="onEdit()" onscroll="syncScroll()" onclick="updateStatus()" onkeyup="updateStatus()"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="output-pane">
+      <div class="output-header">
+        <span class="output-label">Output</span>
+        <span class="output-status idle" id="outputStatus">idle</span>
+      </div>
+      <div id="output">
+        <span class="out-line out-info">:: SILT v2.0 ready. Ctrl+Enter to run.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <span><span class="status-dot"></span>SILT v2.0</span>
+    <span id="statusPos">Ln 1, Col 1</span>
+    <span id="statusLines">1 line</span>
+    <span>UTF-8</span>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════════════════
+    //  SILT v2 INTERPRETER
+    //  Syntax: @vars, @fnCalls, forge/yield/done/check/alter/loop/burn/from/upto/say/set
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    class SiltError extends Error {
+      constructor(msg, line) { super(msg); this.siltLine = line; }
+    }
+    class ReturnSignal { constructor(v) { this.value = v; } }
+
+    // ── TOKENIZER ────────────────────────────────────────────────────────────────
+    const KEYWORDS = new Set([
+      'set', 'say', 'check', 'alter', 'done', 'loop', 'burn', 'from', 'upto', 'as',
+      'forge', 'yield', 'and', 'or', 'not', 'true', 'false',
+      'struct', 'let', 'print', 'null'
+    ]);
+
+    function tokenize(src) {
+      const tokens = [];
+      const lines = src.split('\n');
+      for (let ln = 0; ln < lines.length; ln++) {
+        const lineNum = ln + 1;
+        let line = lines[ln];
+        // strip comment (:: starts a comment)
+        const ci = line.indexOf('::');
+        if (ci !== -1) line = line.slice(0, ci);
+        let j = 0;
+        while (j < line.length) {
+          if (/\s/.test(line[j])) { j++; continue; }
+
+          // string
+          if (line[j] === '"' || line[j] === "'") {
+            const q = line[j++]; let s = '';
+            while (j < line.length && line[j] !== q) {
+              if (line[j] === '\\' && j + 1 < line.length) {
+                j++; s += line[j] === 'n' ? '\n' : line[j] === 't' ? '\t' : line[j];
+              } else s += line[j];
+              j++;
+            }
+            j++;
+            tokens.push({ type: 'STRING', value: s, line: lineNum }); continue;
+          }
+
+          // number
+          if (/[0-9]/.test(line[j])) {
+            let n = '';
+            while (j < line.length && /[0-9.]/.test(line[j])) n += line[j++];
+            tokens.push({ type: 'NUMBER', value: parseFloat(n), line: lineNum }); continue;
+          }
+
+          // @identifier — could be variable or function call
+          if (line[j] === '@') {
+            j++;
+            let name = '';
+            while (j < line.length && /[a-zA-Z_0-9]/.test(line[j])) name += line[j++];
+            tokens.push({ type: 'AT', value: name, line: lineNum }); continue;
+          }
+
+          // two-char ops
+          const two = line.slice(j, j + 2);
+          if (['==', '!=', '<=', '>=', '..', ':='].includes(two)) {
+            const ttype = two === ':=' ? 'WALRUS' : 'OP';
+            tokens.push({ type: ttype, value: two, line: lineNum }); j += 2; continue;
+          }
+
+          // single char
+          if ('+-*/%<>'.includes(line[j])) {
+            tokens.push({ type: 'OP', value: line[j], line: lineNum }); j++; continue;
+          }
+          if (line[j] === '=') { tokens.push({ type: 'ASSIGN', value: '=', line: lineNum }); j++; continue; }
+          if (line[j] === '(') { tokens.push({ type: 'LPAREN', value: '(', line: lineNum }); j++; continue; }
+          if (line[j] === ')') { tokens.push({ type: 'RPAREN', value: ')', line: lineNum }); j++; continue; }
+          if (line[j] === '{') { tokens.push({ type: 'LBRACE', value: '{', line: lineNum }); j++; continue; }
+          if (line[j] === '}') { tokens.push({ type: 'RBRACE', value: '}', line: lineNum }); j++; continue; }
+          if (line[j] === '.') { tokens.push({ type: 'DOT', value: '.', line: lineNum }); j++; continue; }
+          if (line[j] === ':') { tokens.push({ type: 'COLON', value: ':', line: lineNum }); j++; continue; }
+          if (line[j] === ',') { tokens.push({ type: 'COMMA', value: ',', line: lineNum }); j++; continue; }
+
+          // bare word (keyword or identifier)
+          if (/[a-zA-Z_]/.test(line[j])) {
+            let w = '';
+            while (j < line.length && /[a-zA-Z_0-9]/.test(line[j])) w += line[j++];
+            tokens.push({ type: KEYWORDS.has(w) ? 'KW' : 'IDENT', value: w, line: lineNum }); continue;
+          }
+
+          throw new SiltError(`Unexpected character: '${line[j]}'`, lineNum);
+        }
+        tokens.push({ type: 'NEWLINE', line: lineNum });
+      }
+      return tokens;
+    }
+
+    // ── PARSER ───────────────────────────────────────────────────────────────────
+    class Parser {
+      constructor(tokens) { this.tokens = tokens; this.pos = 0; }
+      peek(o = 0) { return this.tokens[this.pos + o] || { type: 'EOF' }; }
+      advance() { return this.tokens[this.pos++] || { type: 'EOF' }; }
+      skipNL() { while (this.peek().type === 'NEWLINE') this.advance(); }
+      skipToNL() { while (this.peek().type !== 'NEWLINE' && this.peek().type !== 'EOF') this.advance(); }
+
+      expect(type, value) {
+        this.skipNL();
+        const t = this.advance();
+        if (t.type !== type || (value !== undefined && t.value !== value))
+          throw new SiltError(`Expected '${value || type}', got '${t.value}'`, t.line);
+        return t;
+      }
+
+      parseProgram() {
+        const body = [];
+        while (this.peek().type !== 'EOF') {
+          this.skipNL();
+          if (this.peek().type === 'EOF') break;
+          body.push(this.parseStmt());
+        }
+        return { type: 'Program', body };
+      }
+
+      parseStmt() {
+        this.skipNL();
+        const t = this.peek();
+
+        if (t.type === 'KW') {
+          if (t.value === 'set') return this.parseSet();
+          if (t.value === 'say') return this.parseSay();
+          if (t.value === 'print') return this.parsePrint();
+          if (t.value === 'check') return this.parseCheck();
+          if (t.value === 'loop') return this.parseLoop();
+          if (t.value === 'burn') return this.parseBurn();
+          if (t.value === 'from') return this.parseFrom();
+          if (t.value === 'forge') return this.parseForge();
+          if (t.value === 'yield') return this.parseYield();
+          if (t.value === 'struct') return this.parseStruct();
+          if (t.value === 'let') return this.parseLet();
+        }
+
+        // bareword identifier = struct field mutation: p.x = 69
+        if (t.type === 'IDENT') {
+          // look ahead for DOT — field assignment
+          const n1 = this.tokens[this.pos + 1], n2 = this.tokens[this.pos + 2], n3 = this.tokens[this.pos + 3];
+          if (n1?.type === 'DOT' && n2?.type === 'IDENT' && n3?.type === 'ASSIGN') {
+            return this.parseFieldAssign();
+          }
+          const expr = this.parseExpr();
+          this.skipToNL();
+          return { type: 'ExprStmt', expr };
+        }
+
+        // @ident — either call-as-statement or expression-statement
+        if (t.type === 'AT') {
+          // if next non-newline token exists and is an argument, treat as call statement
+          const next = this.tokens[this.pos + 1];
+          if (next && next.type !== 'NEWLINE' && next.type !== 'EOF' && next.type !== 'ASSIGN') {
+            return this.parseCallStmt();
+          }
+          const expr = this.parseExpr();
+          this.skipToNL();
+          return { type: 'ExprStmt', expr };
+        }
+
+        const expr = this.parseExpr();
+        this.skipToNL();
+        return { type: 'ExprStmt', expr };
+      }
+
+      parseSet() {
+        const line = this.peek().line; this.advance();
+        const t = this.advance(); // should be AT token
+        if (t.type !== 'AT') throw new SiltError(`Expected @variable after 'set'`, t.line);
+        this.expect('ASSIGN');
+        const value = this.parseExpr();
+        this.skipToNL();
+        return { type: 'Set', name: t.value, value, line };
+      }
+
+      parseSay() {
+        const line = this.peek().line; this.advance();
+        const value = this.parseExpr();
+        this.skipToNL();
+        return { type: 'Say', value, line };
+      }
+
+      parseCheck() {
+        const line = this.peek().line; this.advance();
+        const cond = this.parseExpr(); this.skipToNL();
+        const then = [], els = []; let inElse = false;
+        while (true) {
+          this.skipNL();
+          if (this.peek().type === 'EOF') throw new SiltError('Unclosed check', line);
+          if (this.peek().type === 'KW' && this.peek().value === 'done') { this.advance(); break; }
+          if (this.peek().type === 'KW' && this.peek().value === 'alter') { this.advance(); inElse = true; continue; }
+          (inElse ? els : then).push(this.parseStmt());
+        }
+        return { type: 'Check', cond, then, els, line };
+      }
+
+      parseLoop() {
+        const line = this.peek().line; this.advance();
+        const cond = this.parseExpr(); this.skipToNL();
+        const body = [];
+        while (true) {
+          this.skipNL();
+          if (this.peek().type === 'EOF') throw new SiltError('Unclosed loop', line);
+          if (this.peek().type === 'KW' && this.peek().value === 'done') { this.advance(); break; }
+          body.push(this.parseStmt());
+        }
+        return { type: 'Loop', cond, body, line };
+      }
+
+      parseBurn() {
+        const line = this.peek().line; this.advance();
+        const count = this.parseExpr(); this.skipToNL();
+        const body = [];
+        while (true) {
+          this.skipNL();
+          if (this.peek().type === 'EOF') throw new SiltError('Unclosed burn', line);
+          if (this.peek().type === 'KW' && this.peek().value === 'done') { this.advance(); break; }
+          body.push(this.parseStmt());
+        }
+        return { type: 'Burn', count, body, line };
+      }
+
+      parseFrom() {
+        const line = this.peek().line; this.advance();
+        const from = this.parseExpr();
+        this.expect('KW', 'upto');
+        const to = this.parseExpr();
+        this.expect('KW', 'as');
+        const varTok = this.advance();
+        if (varTok.type !== 'AT') throw new SiltError(`Expected @variable after 'as'`, varTok.line);
+        this.skipToNL();
+        const body = [];
+        while (true) {
+          this.skipNL();
+          if (this.peek().type === 'EOF') throw new SiltError('Unclosed from', line);
+          if (this.peek().type === 'KW' && this.peek().value === 'done') { this.advance(); break; }
+          body.push(this.parseStmt());
+        }
+        return { type: 'From', from, to, varName: varTok.value, body, line };
+      }
+
+      parseForge() {
+        const line = this.peek().line; this.advance();
+        const nameTok = this.advance();
+        const params = [];
+        while (this.peek().type === 'AT') { params.push(this.advance().value); }
+        this.skipToNL();
+        const body = [];
+        while (true) {
+          this.skipNL();
+          if (this.peek().type === 'EOF') throw new SiltError('Unclosed forge', line);
+          if (this.peek().type === 'KW' && this.peek().value === 'done') { this.advance(); break; }
+          body.push(this.parseStmt());
+        }
+        return { type: 'Forge', name: nameTok.value, params, body, line };
+      }
+
+      parseYield() {
+        const line = this.peek().line; this.advance();
+        const value = this.parseExpr(); this.skipToNL();
+        return { type: 'Yield', value, line };
+      }
+
+      parseStruct() {
+        // struct Point { x: int  y: int }
+        const line = this.peek().line; this.advance(); // consume 'struct'
+        const nameTok = this.advance();
+        this.skipNL();
+        this.expect('LBRACE');
+        const fields = [];
+        while (true) {
+          this.skipNL();
+          if (this.peek().type === 'RBRACE' || this.peek().type === 'EOF') break;
+          const fname = this.advance(); // field name (IDENT)
+          this.expect('COLON');
+          const ftype = this.advance().value; // type annotation (ignored at runtime)
+          fields.push({ name: fname.value, ftype });
+        }
+        this.expect('RBRACE');
+        this.skipToNL();
+        return { type: 'StructDef', name: nameTok.value, fields, line };
+      }
+
+      parseLet() {
+        // let p := Point { x: 1, y: 2 }
+        const line = this.peek().line; this.advance(); // consume 'let'
+        const nameTok = this.advance(); // variable name (bare IDENT)
+        this.expect('WALRUS');
+        const value = this.parseExpr();
+        this.skipToNL();
+        return { type: 'LetBind', name: nameTok.value, value, line };
+      }
+
+      parsePrint() {
+        // print("x: {p.x}")  — with interpolation
+        const line = this.peek().line; this.advance();
+        this.skipNL();
+        this.expect('LPAREN');
+        const value = this.parseExpr();
+        this.expect('RPAREN');
+        this.skipToNL();
+        return { type: 'Print', value, line };
+      }
+
+      parseFieldAssign() {
+        // p.x = 69
+        const line = this.peek().line;
+        const objName = this.advance().value;   // IDENT
+        this.advance();                          // DOT
+        const fieldName = this.advance().value; // IDENT
+        this.advance();                          // ASSIGN
+        const value = this.parseExpr();
+        this.skipToNL();
+        return { type: 'FieldAssign', objName, fieldName, value, line };
+      }
+
+      parseCallStmt() {
+        const line = this.peek().line;
+        const name = this.advance().value; // AT token
+        const args = [];
+        while (this.peek().type !== 'NEWLINE' && this.peek().type !== 'EOF') {
+          args.push(this.parseExpr());
+        }
+        this.skipToNL();
+        return { type: 'CallStmt', name, args, line };
+      }
+
+      // ── EXPRESSIONS ────────────────────────────────────────────────────────────
+      parseExpr() { return this.parseOr(); }
+      parseOr() {
+        let l = this.parseAnd();
+        while (this.peek().type === 'KW' && this.peek().value === 'or') { this.advance(); l = { type: 'Bin', op: 'or', l, r: this.parseAnd() }; }
+        return l;
+      }
+      parseAnd() {
+        let l = this.parseNot();
+        while (this.peek().type === 'KW' && this.peek().value === 'and') { this.advance(); l = { type: 'Bin', op: 'and', l, r: this.parseNot() }; }
+        return l;
+      }
+      parseNot() {
+        if (this.peek().type === 'KW' && this.peek().value === 'not') { this.advance(); return { type: 'Un', op: 'not', v: this.parseNot() }; }
+        return this.parseCmp();
+      }
+      parseCmp() {
+        let l = this.parseConcat();
+        while (this.peek().type === 'OP' && ['==', '!=', '<', '>', '<=', '>='].includes(this.peek().value)) {
+          const op = this.advance().value; l = { type: 'Bin', op, l, r: this.parseConcat() };
+        }
+        return l;
+      }
+      parseConcat() {
+        let l = this.parseAdd();
+        while (this.peek().type === 'OP' && this.peek().value === '..') { this.advance(); l = { type: 'Bin', op: '..', l, r: this.parseAdd() }; }
+        return l;
+      }
+      parseAdd() {
+        let l = this.parseMul();
+        while (this.peek().type === 'OP' && ['+', '-'].includes(this.peek().value)) {
+          const op = this.advance().value; l = { type: 'Bin', op, l, r: this.parseMul() };
+        }
+        return l;
+      }
+      parseMul() {
+        let l = this.parseUnary();
+        while (this.peek().type === 'OP' && ['*', '/', '%'].includes(this.peek().value)) {
+          const op = this.advance().value; l = { type: 'Bin', op, l, r: this.parseUnary() };
+        }
+        return l;
+      }
+      parseUnary() {
+        if (this.peek().type === 'OP' && this.peek().value === '-') { this.advance(); return { type: 'Un', op: '-', v: this.parsePrimary() }; }
+        return this.parsePrimary();
+      }
+
+      parsePrimary() {
+        const t = this.peek();
+        if (t.type === 'NUMBER') { this.advance(); return { type: 'Num', value: t.value }; }
+        if (t.type === 'STRING') { this.advance(); return { type: 'Str', value: t.value, line: t.line }; }
+        if (t.type === 'KW' && t.value === 'true') { this.advance(); return { type: 'Bool', value: true }; }
+        if (t.type === 'KW' && t.value === 'false') { this.advance(); return { type: 'Bool', value: false }; }
+        if (t.type === 'KW' && t.value === 'null') { this.advance(); return { type: 'Null' }; }
+        if (t.type === 'LPAREN') {
+          this.advance(); const e = this.parseExpr(); this.expect('RPAREN'); return e;
+        }
+        // bare IDENT: struct literal Name { ... } or field access p.x
+        if (t.type === 'IDENT') {
+          this.advance();
+          if (this.peek().type === 'LBRACE') {
+            // struct literal: Name { field: val, ... }
+            this.advance();
+            const inits = [];
+            while (true) {
+              this.skipNL();
+              if (this.peek().type === 'RBRACE' || this.peek().type === 'EOF') break;
+              const fname = this.advance().value;
+              this.expect('COLON');
+              const fval = this.parseExpr();
+              inits.push({ name: fname, value: fval });
+              if (this.peek().type === 'COMMA') this.advance();
+            }
+            this.expect('RBRACE');
+            let node = { type: 'StructLit', structName: t.value, inits, line: t.line };
+            while (this.peek().type === 'DOT') {
+              this.advance();
+              const field = this.advance().value;
+              node = { type: 'FieldGet', obj: node, field, line: t.line };
+            }
+            return node;
+          }
+          // plain ident or field access: p.x(.y)*
+          let node = { type: 'BareIdent', name: t.value, line: t.line };
+          while (this.peek().type === 'DOT') {
+            this.advance();
+            const field = this.advance().value;
+            node = { type: 'FieldGet', obj: node, field, line: t.line };
+          }
+          return node;
+        }
+        if (t.type === 'AT') {
+          this.advance();
+          if (this.peek().type === 'LPAREN') {
+            this.advance();
+            const args = [];
+            while (this.peek().type !== 'RPAREN' && this.peek().type !== 'EOF') {
+              args.push(this.parseExpr());
+              if (this.peek().value === ',') this.advance();
+            }
+            this.expect('RPAREN');
+            return { type: 'Call', name: t.value, args, line: t.line };
+          }
+          return { type: 'Var', name: t.value, line: t.line };
+        }
+        throw new SiltError(`Unexpected token: '${t.value || t.type}'`, t.line);
+      }
+    }
+
+    // ── INTERPRETER ──────────────────────────────────────────────────────────────
+    const BUILTINS = {
+      sqrt: ([x]) => Math.sqrt(x),
+      abs: ([x]) => Math.abs(x),
+      floor: ([x]) => Math.floor(x),
+      ceil: ([x]) => Math.ceil(x),
+      round: ([x]) => Math.round(x),
+      pow: ([x, y]) => Math.pow(x, y),
+      min: ([x, y]) => Math.min(x, y),
+      max: ([x, y]) => Math.max(x, y),
+      len: ([s]) => String(s).length,
+      upper: ([s]) => String(s).toUpperCase(),
+      lower: ([s]) => String(s).toLowerCase(),
+      trim: ([s]) => String(s).trim(),
+      swap: ([s, a, b]) => String(s).split(a).join(b),
+      str: ([x]) => String(x),
+      num: ([x]) => parseFloat(x),
+      even: ([x]) => x % 2 === 0,
+      odd: ([x]) => x % 2 !== 0,
+    };
+
+    class Interpreter {
+      constructor(printFn) { this.print = printFn; this.ticks = 0; this.MAX = 80000; }
+
+      run(ast) { this.exec(ast.body, new Map()); }
+
+      exec(stmts, env) {
+        for (const s of stmts) {
+          const r = this.execOne(s, env);
+          if (r instanceof ReturnSignal) return r;
+        }
+      }
+
+      execOne(s, env) {
+        if (++this.ticks > this.MAX) throw new SiltError('Too many iterations — infinite loop?', s.line);
+        switch (s.type) {
+          case 'Set': {
+            env.set(s.name, this.eval(s.value, env)); return;
+          }
+          case 'LetBind': {
+            // let p := Point { ... }  — bare name binding
+            env.set(s.name, this.eval(s.value, env)); return;
+          }
+          case 'StructDef': {
+            // register struct schema
+            env.set('__struct__' + s.name, s.fields.map(f => f.name));
+            return;
+          }
+          case 'FieldAssign': {
+            // p.x = 69
+            if (!env.has(s.objName)) throw new SiltError(`'${s.objName}' is not defined`, s.line);
+            const obj = env.get(s.objName);
+            if (!obj || obj.__type__ === undefined) throw new SiltError(`'${s.objName}' is not a struct`, s.line);
+            obj[s.fieldName] = this.eval(s.value, env);
+            return;
+          }
+          case 'Say': {
+            const rawVal = this.eval(s.value, env);
+            const str = typeof rawVal === 'string' ? rawVal : this.show(rawVal);
+            this.print(this.interpolate(str, env)); return;
+          }
+          case 'Print': {
+            const rawVal = this.eval(s.value, env);
+            const str = typeof rawVal === 'string' ? rawVal : this.show(rawVal);
+            this.print(this.interpolate(str, env)); return;
+          }
+          case 'Check': {
+            const branch = this.truthy(this.eval(s.cond, env)) ? s.then : s.els;
+            return this.exec(branch, new Map(env));
+          }
+          case 'Loop': {
+            const e2 = new Map(env);
+            while (this.truthy(this.eval(s.cond, e2))) {
+              if (++this.ticks > this.MAX) throw new SiltError('Too many iterations', s.line);
+              const r = this.exec(s.body, e2); if (r instanceof ReturnSignal) return r;
+            }
+            return;
+          }
+          case 'Burn': {
+            const n = this.eval(s.count, env);
+            const e2 = new Map(env);
+            for (let i = 0; i < n; i++) {
+              if (++this.ticks > this.MAX) throw new SiltError('Too many iterations', s.line);
+              const r = this.exec(s.body, e2); if (r instanceof ReturnSignal) return r;
+            }
+            return;
+          }
+          case 'From': {
+            const from = this.eval(s.from, env), to = this.eval(s.to, env);
+            const e2 = new Map(env);
+            for (let i = from; i <= to; i++) {
+              e2.set(s.varName, i);
+              if (++this.ticks > this.MAX) throw new SiltError('Too many iterations', s.line);
+              const r = this.exec(s.body, e2); if (r instanceof ReturnSignal) return r;
+            }
+            return;
+          }
+          case 'Forge': {
+            env.set(s.name, { __fn__: true, params: s.params, body: s.body, closure: env }); return;
+          }
+          case 'Yield': { return new ReturnSignal(this.eval(s.value, env)); }
+          case 'CallStmt': { this.callFn(s.name, s.args.map(a => this.eval(a, env)), env, s.line); return; }
+          case 'ExprStmt': { this.eval(s.expr, env); return; }
+        }
+      }
+
+      eval(e, env) {
+        switch (e.type) {
+          case 'Num': return e.value;
+          case 'Str': return e.value;
+          case 'Bool': return e.value;
+          case 'Null': return null;
+          case 'Var': {
+            if (!env.has(e.name)) throw new SiltError(`@${e.name} is not defined`, e.line);
+            return env.get(e.name);
+          }
+          case 'BareIdent': {
+            if (!env.has(e.name)) throw new SiltError(`'${e.name}' is not defined`, e.line);
+            return env.get(e.name);
+          }
+          case 'StructLit': {
+            const obj = { __type__: e.structName };
+            for (const init of e.inits) obj[init.name] = this.eval(init.value, env);
+            return obj;
+          }
+          case 'FieldGet': {
+            const obj = this.eval(e.obj, env);
+            if (obj === null || typeof obj !== 'object') throw new SiltError(`Cannot access field '${e.field}' on non-struct`, e.line);
+            if (!(e.field in obj)) throw new SiltError(`No field '${e.field}' on ${obj.__type__}`, e.line);
+            return obj[e.field];
+          }
+          case 'Un': {
+            const v = this.eval(e.v, env);
+            if (e.op === '-') return -v;
+            if (e.op === 'not') return !this.truthy(v);
+            break;
+          }
+          case 'Bin': {
+            if (e.op === 'and') return this.truthy(this.eval(e.l, env)) ? this.eval(e.r, env) : false;
+            if (e.op === 'or') return this.truthy(this.eval(e.l, env)) ? true : this.eval(e.r, env);
+            const l = this.eval(e.l, env), r = this.eval(e.r, env);
+            switch (e.op) {
+              case '..': return this.show(l) + this.show(r);
+              case '+': return l + r;
+              case '-': return l - r;
+              case '*': return l * r;
+              case '/': if (r === 0) throw new SiltError('Division by zero', 0); return l / r;
+              case '%': return l % r;
+              case '==': return l === r;
+              case '!=': return l !== r;
+              case '<': return l < r;
+              case '>': return l > r;
+              case '<=': return l <= r;
+              case '>=': return l >= r;
+            }
+            break;
+          }
+          case 'Call': return this.callFn(e.name, e.args.map(a => this.eval(a, env)), env, e.line);
+        }
+      }
+
+      callFn(name, args, env, line) {
+        if (BUILTINS[name]) return BUILTINS[name](args);
+        if (!env.has(name)) throw new SiltError(`@${name} is not defined`, line);
+        const fn = env.get(name);
+        if (!fn || !fn.__fn__) throw new SiltError(`@${name} is not a function`, line);
+        const e2 = new Map(fn.closure);
+        fn.params.forEach((p, i) => e2.set(p, args[i] ?? null));
+        const r = this.exec(fn.body, e2);
+        if (r instanceof ReturnSignal) return r.value;
+        return null;
+      }
+
+      show(v) {
+        if (v === null || v === undefined) return 'null';
+        if (typeof v === 'boolean') return v ? 'true' : 'false';
+        if (typeof v === 'number') return Number.isInteger(v) ? String(v) : parseFloat(v.toFixed(8)).toString();
+        if (typeof v === 'object' && v.__type__) {
+          const fields = Object.entries(v)
+            .filter(([k]) => k !== '__type__')
+            .map(([k, val]) => `${k}: ${this.show(val)}`).join(', ');
+          return `${v.__type__} { ${fields} }`;
+        }
+        return String(v);
+      }
+
+      // string interpolation: "x is {p.x}" resolves {expr} parts against current env
+      interpolate(str, env) {
+        return str.replace(/\{([^}]+)\}/g, (_, expr) => {
+          try {
+            const toks = tokenize(expr.trim());
+            const ast = new Parser(toks).parseExpr();
+            return this.show(this.eval(ast, env));
+          } catch (e) {
+            return `{${expr}}`;
+          }
+        });
+      }
+
+      truthy(v) { return !(v === false || v === null || v === 0 || v === '' || v === undefined); }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    //  SYNTAX HIGHLIGHTING
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function highlight(code) {
+      const KWS = /\b(set|say|print|check|alter|done|loop|burn|from|upto|as|forge|yield|and|or|not|true|false|struct|let|null)\b/g;
+      const BIS = /@(sqrt|abs|floor|ceil|round|pow|min|max|len|upper|lower|trim|swap|str|num|even|odd)\b/g;
+
+      let out = '';
+      const lines = code.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+        const ci = line.indexOf('::');
+        let main = ci !== -1 ? line.slice(0, ci) : line;
+        const comment = ci !== -1 ? line.slice(ci) : '';
+
+        main = main.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const commentHtml = comment ? `<span class="t-com">${comment.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>` : '';
+
+        // strings — highlight {interpolation} inside them distinctly
+        main = main.replace(/"([^"]*)"/g, (_, inner) => {
+          const hi = inner.replace(/(\{[^}]*\})/g, `<span class="t-bi">$1</span>`);
+          return `<span class="t-str">"${hi}"</span>`;
+        });
+
+        // builtins before general @vars
+        main = main.replace(BIS, (m) => `<span class="t-bi">${m}</span>`);
+        // @vars
+        main = main.replace(/@([a-zA-Z_][a-zA-Z_0-9]*)/g, (m, name) => `<span class="t-var">@${name}</span>`);
+        // numbers
+        main = main.replace(/\b(\d+\.?\d*)\b/g, (m) => `<span class="t-num">${m}</span>`);
+        // keywords
+        main = main.replace(KWS, (m) => `<span class="t-kw">${m}</span>`);
+        // :=
+        main = main.replace(/:=/g, `<span class="t-op">:=</span>`);
+        // operators
+        main = main.replace(/(\.\.|==|!=|&lt;=|&gt;=|&lt;|&gt;)/g, (m) => `<span class="t-op">${m}</span>`);
+
+        out += main + commentHtml + (i < lines.length - 1 ? '\n' : '');
+      }
+      return out;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    //  UI
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    const editorEl = document.getElementById('editor');
+    const highlightEl = document.getElementById('highlight');
+    const outputEl = document.getElementById('output');
+    const statusEl = document.getElementById('outputStatus');
+
+    function runCode() {
+      const src = editorEl.value;
+      outputEl.innerHTML = '';
+      const lines = [];
+      let hasError = false;
+      try {
+        const tokens = tokenize(src);
+        const ast = new Parser(tokens).parseProgram();
+        new Interpreter(v => lines.push({ cls: 'out-print', text: v })).run(ast);
+        lines.push({ cls: 'out-info', text: `:: done · ${lines.length} line${lines.length !== 1 ? 's' : ''} output` });
+      } catch (e) {
+        hasError = true;
+        lines.push({ cls: 'out-error', text: `!! ${e.siltLine ? `[line ${e.siltLine}] ` : ''}${e.message}` });
+      }
+      outputEl.innerHTML = lines.map(l => `<span class="out-line ${l.cls}">${esc(l.text)}</span>`).join('\n');
+      statusEl.className = 'output-status ' + (hasError ? 'err' : 'ok');
+      statusEl.textContent = hasError ? 'error' : 'ok';
+      outputEl.scrollTop = outputEl.scrollHeight;
+    }
+
+    function clearOutput() {
+      outputEl.innerHTML = '<span class="out-line out-info">:: output cleared</span>';
+      statusEl.className = 'output-status idle'; statusEl.textContent = 'idle';
+    }
+
+    function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    function handleKey(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); runCode(); return; }
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const s = editorEl.selectionStart;
+        editorEl.value = editorEl.value.slice(0, s) + '  ' + editorEl.value.slice(editorEl.selectionEnd);
+        editorEl.selectionStart = editorEl.selectionEnd = s + 2;
+        onEdit();
+      }
+    }
+
+    function onEdit() {
+      highlightEl.innerHTML = highlight(editorEl.value);
+      syncScroll();
+      updateLineNumbers();
+      updateStatus();
+    }
+
+    function syncScroll() {
+      highlightEl.scrollTop = editorEl.scrollTop;
+      highlightEl.scrollLeft = editorEl.scrollLeft;
+      document.getElementById('lineNumbers').scrollTop = editorEl.scrollTop;
+    }
+
+    function updateLineNumbers() {
+      const count = (editorEl.value.match(/\n/g) || []).length + 1;
+      document.getElementById('lineNumbers').innerHTML =
+        Array.from({ length: count }, (_, i) => `<span class="line-num">${i + 1}</span>`).join('');
+    }
+
+    function updateStatus() {
+      const v = editorEl.value, p = editorEl.selectionStart;
+      const before = v.slice(0, p);
+      const ln = (before.match(/\n/g) || []).length + 1;
+      const col = p - before.lastIndexOf('\n');
+      const total = (v.match(/\n/g) || []).length + 1;
+      document.getElementById('statusPos').textContent = `Ln ${ln}, Col ${col}`;
+      document.getElementById('statusLines').textContent = `${total} line${total !== 1 ? 's' : ''}`;
+    }
+
+    function ins(code) {
+      const s = editorEl.selectionStart;
+      const before = editorEl.value.slice(0, s);
+      const sep = before.length > 0 && !before.endsWith('\n') ? '\n' : '';
+      editorEl.value = before + sep + code + editorEl.value.slice(s);
+      editorEl.focus(); onEdit();
+    }
+
+    // ── EXAMPLES ─────────────────────────────────────────────────────────────────
+    const examples = {
+      hello:
+        `:: Hello, SILT!
+set @name = "world"
+say "hello, " .. @name .. "!"
+say "SILT v2 is running."`,
+
+      fizzbuzz:
+        `:: FizzBuzz (1 to 30)
+from 1 upto 30 as @i
+  check @i % 15 == 0
+    say "FizzBuzz"
+  alter
+    check @i % 3 == 0
+      say "Fizz"
+    alter
+      check @i % 5 == 0
+        say "Buzz"
+      alter
+        say @i
+      done
+    done
+  done
+done`,
+
+      fibonacci:
+        `:: Fibonacci — recursive
+forge fib @n
+  check @n <= 1
+    yield @n
+  done
+  yield @fib(@n - 1) + @fib(@n - 2)
+done
+
+from 0 upto 12 as @i
+  say "fib(" .. @i .. ") = " .. @fib(@i)
+done`,
+
+      functions:
+        `:: Functions & closures
+forge factorial @n
+  check @n <= 1
+    yield 1
+  done
+  yield @n * @factorial(@n - 1)
+done
+
+forge shout @msg @times
+  burn @times
+    say @upper(@msg) .. "!"
+  done
+done
+
+@shout "hello silt" 3
+
+from 1 upto 8 as @i
+  say @i .. "! = " .. @factorial(@i)
+done`,
+
+      strings:
+        `:: String operations
+set @msg = "  Hello, SILT!  "
+say "raw:     " .. @msg
+say "trimmed: " .. @trim(@msg)
+say "upper:   " .. @upper(@trim(@msg))
+say "lower:   " .. @lower(@trim(@msg))
+say "length:  " .. @len(@trim(@msg))
+
+set @s = "the quick brown fox"
+say @swap(@s, "fox", "cat")`,
+
+      collatz:
+        `:: Collatz conjecture
+forge collatz @n
+  set @steps = 0
+  loop @n != 1
+    check @even(@n)
+      set @n = @n / 2
+    alter
+      set @n = @n * 3 + 1
+    done
+    set @steps = @steps + 1
+  done
+  yield @steps
+done
+
+from 1 upto 15 as @i
+  say "collatz(" .. @i .. ") → " .. @collatz(@i) .. " steps"
+done`,
+
+      structs:
+        `:: Structs — your syntax, exactly
+struct Point {
+  x: int
+  y: int
+}
+
+let p := Point { x: 1, y: 2 }
+print("x: {p.x}, y: {p.y}")
+
+p.x = 69
+p.y = 420
+print("x: {p.x}, y: {p.y}")
+
+:: structs work anywhere
+struct Rect {
+  width: int
+  height: int
+}
+
+forge area @r
+  yield @r.width * @r.height
+done
+
+let box := Rect { width: 10, height: 5 }
+say "area = " .. @area(box)
+
+:: multiple instances
+struct Color {
+  r: int
+  g: int
+  b: int
+}
+
+let red   := Color { r: 255, g: 0,   b: 0   }
+let green := Color { r: 0,   g: 255, b: 0   }
+let blue  := Color { r: 0,   g: 0,   b: 255 }
+
+say "red:   r={red.r} g={red.g} b={red.b}"
+say "green: r={green.r} g={green.g} b={green.b}"
+say "blue:  r={blue.r} g={blue.g} b={blue.b}"`
+    };
+
+    function loadExample(key) {
+      editorEl.value = examples[key];
+      onEdit(); clearOutput(); editorEl.focus();
+    }
+
+    // ── INIT ─────────────────────────────────────────────────────────────────────
+    loadExample('structs');
+    onEdit();
+  </script>
+</body>
+
+</html>
