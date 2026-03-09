@@ -152,6 +152,7 @@
       z-index: 50;
       transform: translateX(100%);
       transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+      overflow: hidden;
     }
 
     .note-panel.open {
@@ -162,6 +163,24 @@
       padding: 20px 24px 16px;
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
+      min-height: 0;
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      min-height: 0;
+    }
+
+    .panel-footer {
+      padding: 14px 24px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface);
     }
 
     .panel-title-row {
@@ -212,7 +231,7 @@
 
     .panel-meta {
       display: flex;
-      gap: 12px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
@@ -230,12 +249,6 @@
     .meta-tag.selected {
       border-color: var(--tag-color);
       color: var(--tag-color);
-    }
-
-    .panel-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 24px;
     }
 
     .panel-body::-webkit-scrollbar {
@@ -330,15 +343,6 @@
       border-color: var(--purple);
     }
 
-    .panel-footer {
-      padding: 14px 24px;
-      border-top: 1px solid var(--border);
-      flex-shrink: 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
     .del-btn {
       font-family: 'Martian Mono', monospace;
       font-size: 0.48rem;
@@ -428,7 +432,7 @@
     .legend {
       position: absolute;
       bottom: 20px;
-      right: 20px;
+      left: 170px;
       z-index: 50;
       background: var(--surface);
       border: 1px solid var(--border);
@@ -508,8 +512,10 @@
           <span class="panel-tag" id="panelNoteId"></span>
           <button class="panel-close" onclick="closePanel()">close ×</button>
         </div>
-        <textarea id="noteTitle" rows="1" placeholder="Note title..." oninput="autoResize(this)"></textarea>
-        <div class="panel-meta" id="panelMeta">
+        <textarea id="noteTitle" rows="1" placeholder="Note title..." oninput="autoResize(this); autoSave()"></textarea>
+      </div>
+      <div class="panel-body">
+        <div class="panel-meta" id="panelMeta" style="margin-bottom:16px">
           <div class="meta-tag" data-tag="idea" style="--tag-color:#00AAAA" onclick="toggleTag('idea')">idea</div>
           <div class="meta-tag" data-tag="question" style="--tag-color:#8b7fcf" onclick="toggleTag('question')">question
           </div>
@@ -519,10 +525,8 @@
           <div class="meta-tag" data-tag="insight" style="--tag-color:#4ec994" onclick="toggleTag('insight')">insight
           </div>
         </div>
-      </div>
-      <div class="panel-body">
-        <textarea id="noteContent" rows="10"
-          placeholder="Write anything. These thoughts connect to each other..."></textarea>
+        <textarea id="noteContent" rows="10" placeholder="Write anything. These thoughts connect to each other..."
+          oninput="autoSave()"></textarea>
         <div class="panel-links">
           <div class="links-label">Connections</div>
           <div class="link-list" id="linkList"></div>
@@ -883,14 +887,20 @@
     function toggleTag(tag) {
       const el = document.querySelector(`.meta-tag[data-tag="${tag}"]`);
       el.classList.toggle('selected');
+      autoSave();
     }
 
-    function saveNote() {
+    function autoSave() {
       if (!selectedNote) return;
       selectedNote.title = document.getElementById('noteTitle').value.trim() || 'Untitled';
       selectedNote.content = document.getElementById('noteContent').value;
       selectedNote.tags = [...document.querySelectorAll('.meta-tag.selected')].map(el => el.dataset.tag);
-      toast('Note saved');
+      markDirty();
+    }
+
+    function saveNote() {
+      autoSave();
+      toast('Saved');
     }
 
     function deleteNote() {
