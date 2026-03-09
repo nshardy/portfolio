@@ -62,7 +62,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 24px;
+      padding: 0 20px;
       height: 50px;
       border-bottom: 1px solid var(--border);
       background: var(--surface);
@@ -71,22 +71,167 @@
       position: relative;
     }
 
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
     .brand {
       font-size: 0.68rem;
       letter-spacing: 0.18em;
       color: var(--cyan);
     }
 
-    .brand-sub {
-      font-size: 0.48rem;
+    .garden-switcher {
+      display: flex;
+      align-items: center;
+    }
+
+    .garden-name-btn {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--ink);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .garden-name-btn:hover {
+      border-bottom-color: var(--purple);
+    }
+
+    .garden-dropdown-btn {
+      background: none;
+      border: none;
       color: var(--ink-dim);
-      letter-spacing: 0.1em;
-      margin-left: 12px;
+      cursor: pointer;
+      font-size: 0.6rem;
+      padding: 2px 6px;
+      transition: color 0.2s;
+    }
+
+    .garden-dropdown-btn:hover {
+      color: var(--ink);
+    }
+
+    /* GARDEN POPUP */
+    .garden-popup {
+      position: absolute;
+      top: 54px;
+      left: 20px;
+      z-index: 300;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      width: 280px;
+      display: none;
+    }
+
+    .garden-popup.open {
+      display: block;
+    }
+
+    .garden-popup-header {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.44rem;
+      letter-spacing: 0.15em;
+      color: var(--ink-dim);
+      text-transform: uppercase;
+    }
+
+    .garden-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .garden-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .garden-item:last-child {
+      border-bottom: none;
+    }
+
+    .garden-item:hover {
+      background: var(--lift);
+    }
+
+    .garden-item.active {
+      color: var(--cyan);
+    }
+
+    .garden-item-name {
+      flex: 1;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+    }
+
+    .garden-item-count {
+      font-size: 0.44rem;
+      color: var(--ink-dim);
+    }
+
+    .garden-item-del {
+      font-size: 0.8rem;
+      color: var(--ink-dim);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .garden-item:hover .garden-item-del {
+      opacity: 0.5;
+    }
+
+    .garden-item-del:hover {
+      color: var(--red) !important;
+      opacity: 1 !important;
+    }
+
+    .garden-popup-footer {
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
+
+    .garden-new-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--ink);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.9rem;
+      padding: 6px 10px;
+      outline: none;
+    }
+
+    .garden-new-input:focus {
+      border-color: var(--purple);
+    }
+
+    .garden-new-input::placeholder {
+      color: var(--ink-dim);
+      font-style: italic;
     }
 
     .topbar-right {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
     }
 
@@ -119,7 +264,7 @@
       color: var(--cyan);
     }
 
-    /* MAIN LAYOUT */
+    /* LAYOUT */
     .layout {
       display: flex;
       flex: 1;
@@ -127,7 +272,6 @@
       position: relative;
     }
 
-    /* GRAPH CANVAS */
     #graphCanvas {
       position: absolute;
       inset: 0;
@@ -138,7 +282,7 @@
       cursor: grabbing;
     }
 
-    /* SIDEBAR — NOTE EDITOR */
+    /* NOTE PANEL */
     .note-panel {
       position: absolute;
       top: 0;
@@ -150,9 +294,9 @@
       display: flex;
       flex-direction: column;
       z-index: 50;
+      overflow: hidden;
       transform: translateX(100%);
       transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
-      overflow: hidden;
     }
 
     .note-panel.open {
@@ -160,38 +304,20 @@
     }
 
     .panel-header {
-      padding: 20px 24px 16px;
+      padding: 16px 20px 14px;
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
-      min-height: 0;
-    }
-
-    .panel-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 24px;
-      min-height: 0;
-    }
-
-    .panel-footer {
-      padding: 14px 24px;
-      border-top: 1px solid var(--border);
-      flex-shrink: 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--surface);
     }
 
     .panel-title-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
-    .panel-tag {
-      font-size: 0.46rem;
+    .panel-id {
+      font-size: 0.44rem;
       letter-spacing: 0.15em;
       color: var(--ink-dim);
       text-transform: uppercase;
@@ -220,7 +346,7 @@
       border: none;
       outline: none;
       font-family: 'Cormorant Garamond', serif;
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       font-weight: 300;
       color: var(--ink);
       letter-spacing: -0.01em;
@@ -229,10 +355,46 @@
       padding: 0;
     }
 
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      min-height: 0;
+    }
+
+    .panel-body::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .panel-body::-webkit-scrollbar-thumb {
+      background: var(--border);
+    }
+
+    /* SECTION LABELS */
+    .sec-label {
+      font-size: 0.44rem;
+      letter-spacing: 0.15em;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sec-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* TAGS */
     .panel-meta {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
+      margin-bottom: 4px;
     }
 
     .meta-tag {
@@ -244,6 +406,17 @@
       cursor: pointer;
       transition: all 0.2s;
       text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .meta-tag .tag-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
     }
 
     .meta-tag.selected {
@@ -251,17 +424,87 @@
       color: var(--tag-color);
     }
 
-    .panel-body::-webkit-scrollbar {
-      width: 3px;
+    .meta-tag-add {
+      font-size: 0.45rem;
+      letter-spacing: 0.1em;
+      padding: 3px 8px;
+      border: 1px dashed var(--border);
+      color: var(--ink-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+      background: none;
+      font-family: 'Martian Mono', monospace;
     }
 
-    .panel-body::-webkit-scrollbar-thumb {
-      background: var(--border);
+    .meta-tag-add:hover {
+      border-color: var(--purple);
+      color: var(--purple);
     }
 
+    /* NEW TAG FORM */
+    .new-tag-form {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      margin: 8px 0 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .new-tag-form.open {
+      display: flex;
+    }
+
+    .new-tag-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .new-tag-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--ink);
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.52rem;
+      padding: 5px 8px;
+      outline: none;
+    }
+
+    .new-tag-input:focus {
+      border-color: var(--purple);
+    }
+
+    .new-tag-input::placeholder {
+      color: var(--ink-dim);
+    }
+
+    .color-swatches {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .color-swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .color-swatch.selected {
+      border-color: var(--ink);
+    }
+
+    /* CONTENT */
     #noteContent {
       width: 100%;
-      min-height: 200px;
+      min-height: 100px;
       background: none;
       border: none;
       outline: none;
@@ -272,6 +515,7 @@
       line-height: 1.8;
       resize: none;
       user-select: text;
+      margin-bottom: 12px;
     }
 
     #noteContent::placeholder {
@@ -279,22 +523,12 @@
       font-style: italic;
     }
 
-    .panel-links {
-      margin-top: 20px;
-    }
-
-    .links-label {
-      font-size: 0.46rem;
-      letter-spacing: 0.15em;
-      color: var(--cyan);
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-
+    /* CONNECTIONS */
     .link-list {
       display: flex;
       flex-direction: column;
       gap: 6px;
+      margin-bottom: 8px;
     }
 
     .link-item {
@@ -302,11 +536,12 @@
       align-items: center;
       gap: 10px;
       padding: 8px 12px;
+      min-height: 36px;
       border: 1px solid var(--border);
       cursor: pointer;
       transition: all 0.2s;
       color: var(--ink-mid);
-      font-size: 0.62rem;
+      font-size: 0.75rem;
       font-family: 'Cormorant Garamond', serif;
     }
 
@@ -341,7 +576,7 @@
 
     .link-search-wrap {
       position: relative;
-      margin-top: 10px;
+      margin-top: 4px;
     }
 
     .link-search {
@@ -402,7 +637,6 @@
 
     .link-result-item.already-linked {
       background: rgba(0, 170, 170, 0.05);
-      color: var(--ink-mid);
     }
 
     .link-results::-webkit-scrollbar {
@@ -411,6 +645,16 @@
 
     .link-results::-webkit-scrollbar-thumb {
       background: var(--border);
+    }
+
+    .panel-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface);
     }
 
     .del-btn {
@@ -466,17 +710,6 @@
     }
 
     /* SEARCH */
-    .search-wrap {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 60;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
     #searchInput {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -486,7 +719,7 @@
       letter-spacing: 0.08em;
       padding: 8px 14px;
       outline: none;
-      width: 240px;
+      width: 200px;
       transition: border-color 0.2s;
     }
 
@@ -506,16 +739,39 @@
       z-index: 50;
       background: var(--surface);
       border: 1px solid var(--border);
-      padding: 12px 14px;
-      font-size: 0.46rem;
+    }
+
+    .legend-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.44rem;
       letter-spacing: 0.08em;
+    }
+
+    .legend-header:hover {
+      background: var(--lift);
     }
 
     .legend-title {
       color: var(--ink-dim);
       text-transform: uppercase;
       letter-spacing: 0.15em;
-      margin-bottom: 8px;
+    }
+
+    .legend-toggle {
+      color: var(--ink-dim);
+    }
+
+    .legend-body {
+      padding: 6px 12px 10px;
+    }
+
+    .legend-body.hidden {
+      display: none;
     }
 
     .legend-row {
@@ -524,6 +780,12 @@
       gap: 8px;
       color: var(--ink-dim);
       margin-bottom: 5px;
+      font-size: 0.46rem;
+      letter-spacing: 0.08em;
+    }
+
+    .legend-row:last-child {
+      margin-bottom: 0;
     }
 
     .legend-dot {
@@ -561,50 +823,63 @@
 <body>
 
   <div class="topbar">
-    <div>
+    <div class="topbar-left">
       <span class="brand">GARDEN</span>
-      <span class="brand-sub">digital notes · by Noah S Hardy</span>
+      <div class="garden-switcher">
+        <button class="garden-name-btn" id="gardenNameBtn" onclick="toggleGardenPopup()">Loading…</button>
+        <button class="garden-dropdown-btn" onclick="toggleGardenPopup()">▾</button>
+      </div>
     </div>
     <div class="topbar-right">
-      <input type="text" id="searchInput" placeholder="search notes...">
+      <input type="text" id="searchInput" placeholder="search notes…">
       <button class="tb-btn" onclick="resetView()">Reset View</button>
       <button class="tb-btn primary" onclick="newNote()">+ New Note</button>
+    </div>
+  </div>
+
+  <div class="garden-popup" id="gardenPopup">
+    <div class="garden-popup-header">Your Gardens</div>
+    <div class="garden-list" id="gardenList"></div>
+    <div class="garden-popup-footer">
+      <input class="garden-new-input" id="gardenNewInput" placeholder="New garden name…"
+        onkeydown="if(event.key==='Enter')createGarden()">
+      <button class="tb-btn" onclick="createGarden()" style="padding:6px 10px;font-size:0.46rem">Create</button>
     </div>
   </div>
 
   <div class="layout">
     <canvas id="graphCanvas"></canvas>
 
-    <!-- NOTE PANEL -->
     <div class="note-panel" id="notePanel">
       <div class="panel-header">
         <div class="panel-title-row">
-          <span class="panel-tag" id="panelNoteId"></span>
+          <span class="panel-id" id="panelNoteId"></span>
           <button class="panel-close" onclick="closePanel()">close ×</button>
         </div>
-        <textarea id="noteTitle" rows="1" placeholder="Note title..." oninput="autoResize(this); autoSave()"></textarea>
+        <textarea id="noteTitle" rows="1" placeholder="Note title…" oninput="autoResize(this);autoSave()"></textarea>
       </div>
       <div class="panel-body">
-        <div class="panel-meta" id="panelMeta" style="margin-bottom:16px">
-          <div class="meta-tag" data-tag="idea" style="--tag-color:#00AAAA" onclick="toggleTag('idea')">idea</div>
-          <div class="meta-tag" data-tag="question" style="--tag-color:#8b7fcf" onclick="toggleTag('question')">question
+        <div class="sec-label">Tags</div>
+        <div class="panel-meta" id="panelMeta"></div>
+        <div class="new-tag-form" id="newTagForm">
+          <div class="new-tag-row">
+            <input class="new-tag-input" id="newTagName" placeholder="tag name…" maxlength="20"
+              onkeydown="if(event.key==='Enter')createTag()">
+            <button class="tb-btn" onclick="createTag()" style="padding:4px 8px;font-size:0.44rem">Add</button>
+            <button class="tb-btn" onclick="closeNewTagForm()" style="padding:4px 6px;font-size:0.44rem">✕</button>
           </div>
-          <div class="meta-tag" data-tag="reference" style="--tag-color:#c9a96e" onclick="toggleTag('reference')">
-            reference</div>
-          <div class="meta-tag" data-tag="todo" style="--tag-color:#e0786a" onclick="toggleTag('todo')">todo</div>
-          <div class="meta-tag" data-tag="insight" style="--tag-color:#4ec994" onclick="toggleTag('insight')">insight
-          </div>
+          <div class="color-swatches" id="colorSwatches"></div>
         </div>
-        <textarea id="noteContent" rows="10" placeholder="Write anything. These thoughts connect to each other..."
-          oninput="autoSave()"></textarea>
-        <div class="panel-links">
-          <div class="links-label">Connections</div>
-          <div class="link-list" id="linkList"></div>
-          <div class="link-search-wrap">
-            <input class="link-search" id="linkSearch" type="text" placeholder="Search to connect a note…"
-              autocomplete="off" oninput="onLinkSearch()" onfocus="onLinkSearch()">
-            <div class="link-results" id="linkResults"></div>
-          </div>
+
+        <div class="sec-label" style="margin-top:8px">Content</div>
+        <textarea id="noteContent" rows="5" placeholder="Write anything…" oninput="autoSave()"></textarea>
+
+        <div class="sec-label">Connections</div>
+        <div class="link-list" id="linkList"></div>
+        <div class="link-search-wrap">
+          <input class="link-search" id="linkSearch" type="text" placeholder="Search to connect a note…"
+            autocomplete="off" oninput="onLinkSearch()" onfocus="onLinkSearch()">
+          <div class="link-results" id="linkResults"></div>
         </div>
       </div>
       <div class="panel-footer">
@@ -615,26 +890,12 @@
 
     <div class="minimap"><canvas id="minimapCanvas"></canvas></div>
 
-    <div class="legend">
-      <div class="legend-title">Tags</div>
-      <div class="legend-row">
-        <div class="legend-dot" style="background:#00AAAA"></div>idea
+    <div class="legend" id="legend">
+      <div class="legend-header" onclick="toggleLegend()">
+        <span class="legend-title">Tags</span>
+        <span class="legend-toggle" id="legendToggle">▴</span>
       </div>
-      <div class="legend-row">
-        <div class="legend-dot" style="background:#8b7fcf"></div>question
-      </div>
-      <div class="legend-row">
-        <div class="legend-dot" style="background:#c9a96e"></div>reference
-      </div>
-      <div class="legend-row">
-        <div class="legend-dot" style="background:#e0786a"></div>todo
-      </div>
-      <div class="legend-row">
-        <div class="legend-dot" style="background:#4ec994"></div>insight
-      </div>
-      <div class="legend-row">
-        <div class="legend-dot" style="background:#4e4a62"></div>untagged
-      </div>
+      <div class="legend-body" id="legendBody"></div>
     </div>
   </div>
 
@@ -642,252 +903,372 @@
 
   <script>
     // ═══════════════════════════════════════════════════════════════════
-    //  DATA
+    //  CONSTANTS
     // ═══════════════════════════════════════════════════════════════════
-    const TAG_COLORS = {
-      idea: '#00AAAA', question: '#8b7fcf', reference: '#c9a96e',
-      todo: '#e0786a', insight: '#4ec994',
-    };
+    const SWATCH_COLORS = [
+      '#00AAAA', '#8b7fcf', '#4ec994', '#c9a96e', '#e0786a',
+      '#d4845a', '#4a9ebb', '#a67cc4', '#7eb8c9', '#b5cc6a',
+      '#e8a0bf', '#6ab8e8', '#e8d46a', '#88c8a0', '#c4a07c',
+    ];
+    const DEFAULT_TAGS = [
+      { id: 'idea', label: 'idea', color: '#00AAAA' },
+      { id: 'question', label: 'question', color: '#8b7fcf' },
+      { id: 'reference', label: 'reference', color: '#c9a96e' },
+      { id: 'todo', label: 'todo', color: '#e0786a' },
+      { id: 'insight', label: 'insight', color: '#4ec994' },
+    ];
 
-    let notes = [];
-    let links = [];
-    let nextId = 1;
-    let selectedNote = null;
-    let hoveredNote = null;
-
-    // Viewport
+    // ═══════════════════════════════════════════════════════════════════
+    //  STATE
+    // ═══════════════════════════════════════════════════════════════════
+    let gardens = {}, gardenIds = [], currentGardenId = null;
+    let notes = [], links = [], nextId = 1, customTags = [];
+    let selectedNote = null, hoveredNote = null;
     let vpX = 0, vpY = 0, vpScale = 1;
     let isDragging = false, dragStartX = 0, dragStartY = 0, dragVpX = 0, dragVpY = 0;
-    let nodeDragging = null, nodeDragOffX = 0, nodeDragOffY = 0, nodeDragMoved = false;
-    let nodeDragStartX = 0, nodeDragStartY = 0;
+    let nodeDragging = null, nodeDragOffX = 0, nodeDragOffY = 0;
+    let nodeDragMoved = false, nodeDragStartX = 0, nodeDragStartY = 0;
+    let legendVisible = true;
+    let dirty = true;
+    let newTagColor = SWATCH_COLORS[0];
 
     const canvas = document.getElementById('graphCanvas');
     const ctx = canvas.getContext('2d');
     const miniCanvas = document.getElementById('minimapCanvas');
     const miniCtx = miniCanvas.getContext('2d');
 
-    // ── SEED DATA ──────────────────────────────────────────────────────
-    function seedData() {
-      const seed = [
-        { id: 1, title: 'Digital Garden', content: 'A non-linear space for thinking. Unlike a blog, notes here evolve and link to each other — ideas grow rather than publish.', tags: ['idea'], x: 0, y: 0 },
-        { id: 2, title: 'Evergreen Notes', content: 'Notes that are concept-oriented rather than time-oriented. Kept up to date as thinking evolves. Named after trees, not dates.', tags: ['reference'], x: 220, y: -80 },
-        { id: 3, title: 'Zettelkasten Method', content: 'A slip-box system. Every note links to others. The connections are more valuable than the notes themselves.', tags: ['reference'], x: 220, y: 80 },
-        { id: 4, title: 'Spaced Repetition', content: 'Reviewing information at increasing intervals. The forgetting curve works against you — this works with it.', tags: ['insight'], x: 460, y: -120 },
-        { id: 5, title: 'Why do we forget?', content: 'Is forgetting a failure of memory, or a feature? Perhaps the brain discards what it deems unimportant. What does it keep?', tags: ['question'], x: 460, y: 60 },
-        { id: 6, title: 'Build a second brain', content: 'The idea of offloading memory to an external system. Frees working memory for synthesis rather than recall.', tags: ['idea'], x: -180, y: 100 },
-        { id: 7, title: 'Read before you write', content: 'You cannot make connections without raw material. Input before output. But not too much — the trap of infinite research.', tags: ['insight'], x: -180, y: -100 },
-        { id: 8, title: 'Things to explore', content: '- Graph databases for personal notes\n- Obsidian vs Roam\n- How Twitter threads work as public Zettelkasten', tags: ['todo'], x: -360, y: 0 },
-      ];
-      const seedLinks = [
-        [1, 2], [1, 3], [1, 6], [2, 3], [3, 4], [3, 5], [4, 5], [6, 7], [7, 8], [2, 7]
-      ];
-      seed.forEach(n => { notes.push(n); if (n.id >= nextId) nextId = n.id + 1; });
-      seedLinks.forEach(([a, b]) => links.push({ from: a, to: b }));
-    }
-    function saveToStorage() {
+    // ═══════════════════════════════════════════════════════════════════
+    //  STORAGE
+    // ═══════════════════════════════════════════════════════════════════
+    function saveAll() {
+      if (currentGardenId && gardens[currentGardenId]) {
+        gardens[currentGardenId].notes = notes;
+        gardens[currentGardenId].links = links;
+        gardens[currentGardenId].nextId = nextId;
+        gardens[currentGardenId].customTags = customTags;
+      }
       try {
-        localStorage.setItem('garden_notes', JSON.stringify(notes));
-        localStorage.setItem('garden_links', JSON.stringify(links));
-        localStorage.setItem('garden_nextId', String(nextId));
+        localStorage.setItem('gdn_v3_data', JSON.stringify({ gardens, gardenIds, currentGardenId }));
       } catch (e) { }
     }
 
-    function loadFromStorage() {
+    function loadAll() {
       try {
-        const savedNotes = localStorage.getItem('garden_notes');
-        const savedLinks = localStorage.getItem('garden_links');
-        const savedId = localStorage.getItem('garden_nextId');
-        if (savedNotes) {
-          notes = JSON.parse(savedNotes);
-          links = JSON.parse(savedLinks || '[]');
-          nextId = parseInt(savedId || '1');
-          return true;
+        const raw = localStorage.getItem('gdn_v3_data');
+        if (raw) {
+          const d = JSON.parse(raw);
+          gardens = d.gardens || {};
+          gardenIds = d.gardenIds || [];
+          currentGardenId = d.currentGardenId && gardens[d.currentGardenId] ? d.currentGardenId : gardenIds[0];
+          return gardenIds.length > 0;
         }
       } catch (e) { }
       return false;
     }
 
-    if (!loadFromStorage()) {
-      seedData();
-      saveToStorage();
-    }
-
-    // ── COORDINATE HELPERS ────────────────────────────────────────────
-    function worldToScreen(x, y) {
+    // ═══════════════════════════════════════════════════════════════════
+    //  SEED
+    // ═══════════════════════════════════════════════════════════════════
+    function makeSeed() {
       return {
-        x: (x + vpX) * vpScale + canvas.width / 2,
-        y: (y + vpY) * vpScale + canvas.height / 2,
+        notes: [
+          { id: 1, title: 'Digital Garden', content: 'A non-linear space for thinking. Unlike a blog, notes here evolve and link to each other.', tags: ['idea'], x: 0, y: 0 },
+          { id: 2, title: 'Evergreen Notes', content: 'Notes that are concept-oriented rather than time-oriented. Kept up to date as thinking evolves.', tags: ['reference'], x: 220, y: -80 },
+          { id: 3, title: 'Zettelkasten Method', content: 'A slip-box system. Every note links to others. The connections are more valuable than the notes.', tags: ['reference'], x: 220, y: 80 },
+          { id: 4, title: 'Spaced Repetition', content: 'Reviewing information at increasing intervals. The forgetting curve works against you.', tags: ['insight'], x: 460, y: -120 },
+          { id: 5, title: 'Why do we forget?', content: 'Is forgetting a failure of memory, or a feature? What does the brain choose to keep?', tags: ['question'], x: 460, y: 60 },
+          { id: 6, title: 'Build a second brain', content: 'The idea of offloading memory to an external system. Frees working memory for synthesis.', tags: ['idea'], x: -180, y: 100 },
+          { id: 7, title: 'Read before you write', content: 'You cannot make connections without raw material. Input before output.', tags: ['insight'], x: -180, y: -100 },
+          { id: 8, title: 'Things to explore', content: '- Graph databases\n- Obsidian vs Roam\n- Twitter threads as public Zettelkasten', tags: ['todo'], x: -360, y: 0 },
+        ],
+        links: [[1, 2], [1, 3], [1, 6], [2, 3], [3, 4], [3, 5], [4, 5], [6, 7], [7, 8], [2, 7]].map(([a, b]) => ({ from: a, to: b })),
+        nextId: 9, customTags: [],
       };
     }
-    function screenToWorld(x, y) {
-      return {
-        x: (x - canvas.width / 2) / vpScale - vpX,
-        y: (y - canvas.height / 2) / vpScale - vpY,
-      };
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  GARDEN ACTIVATION
+    // ═══════════════════════════════════════════════════════════════════
+    function activateGarden(id) {
+      // Flush current only when switching away from a different garden
+      if (currentGardenId && currentGardenId !== id && gardens[currentGardenId]) {
+        gardens[currentGardenId].notes = notes;
+        gardens[currentGardenId].links = links;
+        gardens[currentGardenId].nextId = nextId;
+        gardens[currentGardenId].customTags = customTags;
+      }
+      currentGardenId = id;
+      const g = gardens[id];
+      notes = g.notes || [];
+      links = g.links || [];
+      nextId = g.nextId || 1;
+      customTags = g.customTags || [];
+
+      vpX = 0; vpY = 0; vpScale = 1;
+      selectedNote = null; hoveredNote = null;
+      document.getElementById('gardenNameBtn').textContent = g.name;
+      document.getElementById('notePanel').classList.remove('open');
+      renderTagsPanel();
+      renderLegend();
+      markDirty();
     }
 
-    function nodeRadius(note) {
-      const conns = links.filter(l => l.from === note.id || l.to === note.id).length;
-      return 10 + conns * 3;
+    // Init
+    if (!loadAll()) {
+      const id = 'g_' + Date.now();
+      gardens = { [id]: { name: 'My Garden', ...makeSeed() } };
+      gardenIds = [id];
+      currentGardenId = id;
+    }
+    activateGarden(currentGardenId);
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  GARDEN UI
+    // ═══════════════════════════════════════════════════════════════════
+    function toggleGardenPopup() {
+      const p = document.getElementById('gardenPopup');
+      p.classList.toggle('open');
+      if (p.classList.contains('open')) renderGardenList();
+    }
+
+    function renderGardenList() {
+      document.getElementById('gardenList').innerHTML = gardenIds.map(id => {
+        const g = gardens[id], count = (g.notes || []).length;
+        return `<div class="garden-item ${id === currentGardenId ? 'active' : ''}" onclick="switchGarden('${id}')">
+      <span class="garden-item-name">${g.name}</span>
+      <span class="garden-item-count">${count} note${count !== 1 ? 's' : ''}</span>
+      ${gardenIds.length > 1 ? `<span class="garden-item-del" onclick="event.stopPropagation();deleteGarden('${id}')">×</span>` : ''}
+    </div>`;
+      }).join('');
+    }
+
+    function switchGarden(id) {
+      document.getElementById('gardenPopup').classList.remove('open');
+      // Flush current garden before switching
+      if (currentGardenId && gardens[currentGardenId]) {
+        gardens[currentGardenId].notes = notes;
+        gardens[currentGardenId].links = links;
+        gardens[currentGardenId].nextId = nextId;
+        gardens[currentGardenId].customTags = customTags;
+      }
+      activateGarden(id);
+      saveAll();
+    }
+
+    function createGarden() {
+      const inp = document.getElementById('gardenNewInput');
+      const name = inp.value.trim(); if (!name) return;
+      const id = 'g_' + Date.now();
+      gardens[id] = { name, ...makeSeed(), customTags: [] };
+      gardenIds.push(id); inp.value = '';
+      switchGarden(id);
+    }
+
+    function deleteGarden(id) {
+      if (gardenIds.length <= 1) { toast('Cannot delete the last garden'); return; }
+      if (!confirm(`Delete "${gardens[id].name}"? This cannot be undone.`)) return;
+      gardenIds = gardenIds.filter(i => i !== id);
+      delete gardens[id];
+      if (currentGardenId === id) activateGarden(gardenIds[0]);
+      else { saveAll(); renderGardenList(); }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  TAGS
+    // ═══════════════════════════════════════════════════════════════════
+    function allTags() { return [...DEFAULT_TAGS, ...customTags]; }
+
+    function tagColor(id) {
+      const t = allTags().find(t => t.id === id);
+      return t ? t.color : '#4e4a62';
     }
 
     function nodeColor(note) {
-      if (!note.tags || note.tags.length === 0) return '#4e4a62';
-      return TAG_COLORS[note.tags[0]] || '#4e4a62';
+      if (!note.tags || !note.tags.length) return '#4e4a62';
+      return tagColor(note.tags[0]);
     }
 
+    function renderTagsPanel() {
+      document.getElementById('panelMeta').innerHTML =
+        allTags().map(t => `
+      <div class="meta-tag" data-tag="${t.id}" style="--tag-color:${t.color}" onclick="toggleTag('${t.id}')">
+        <span class="tag-dot"></span>${t.label}
+      </div>`).join('') +
+        `<button class="meta-tag-add" onclick="openNewTagForm()">+ tag</button>`;
+    }
+
+    function renderLegend() {
+      document.getElementById('legendBody').innerHTML =
+        allTags().map(t => `
+      <div class="legend-row">
+        <div class="legend-dot" style="background:${t.color}"></div><span>${t.label}</span>
+      </div>`).join('') +
+        `<div class="legend-row"><div class="legend-dot" style="background:#4e4a62"></div><span>untagged</span></div>`;
+    }
+
+    function toggleLegend() {
+      legendVisible = !legendVisible;
+      document.getElementById('legendBody').classList.toggle('hidden', !legendVisible);
+      document.getElementById('legendToggle').textContent = legendVisible ? '▴' : '▾';
+    }
+
+    function openNewTagForm() {
+      document.getElementById('newTagForm').classList.add('open');
+      document.getElementById('newTagName').focus();
+      document.getElementById('colorSwatches').innerHTML = SWATCH_COLORS.map(c =>
+        `<div class="color-swatch ${c === newTagColor ? 'selected' : ''}" style="background:${c}"
+      onclick="selectSwatch('${c}',this)"></div>`).join('');
+    }
+
+    function closeNewTagForm() {
+      document.getElementById('newTagForm').classList.remove('open');
+      document.getElementById('newTagName').value = '';
+    }
+
+    function selectSwatch(color, el) {
+      newTagColor = color;
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    function createTag() {
+      const raw = document.getElementById('newTagName').value.trim();
+      const name = raw.toLowerCase().replace(/\s+/g, '-');
+      if (!name) return;
+      if (allTags().find(t => t.id === name)) { toast('Tag already exists'); return; }
+      customTags.push({ id: name, label: raw || name, color: newTagColor });
+      closeNewTagForm();
+      renderTagsPanel();
+      renderLegend();
+      if (selectedNote) {
+        document.querySelectorAll('.meta-tag').forEach(el =>
+          el.classList.toggle('selected', selectedNote.tags?.includes(el.dataset.tag)));
+      }
+      saveAll(); markDirty(); toast(`Tag "${raw}" created`);
+    }
+
+    function toggleTag(tag) {
+      const el = document.querySelector(`.meta-tag[data-tag="${tag}"]`);
+      if (el) el.classList.toggle('selected');
+      autoSave();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  COORDINATE HELPERS
+    // ═══════════════════════════════════════════════════════════════════
+    function worldToScreen(x, y) {
+      return { x: (x + vpX) * vpScale + canvas.width / 2, y: (y + vpY) * vpScale + canvas.height / 2 };
+    }
+    function screenToWorld(x, y) {
+      return { x: (x - canvas.width / 2) / vpScale - vpX, y: (y - canvas.height / 2) / vpScale - vpY };
+    }
+    function nodeRadius(note) {
+      return 10 + links.filter(l => l.from === note.id || l.to === note.id).length * 3;
+    }
     function canvasXY(e) {
       const r = canvas.getBoundingClientRect();
       return { x: e.clientX - r.left, y: e.clientY - r.top };
     }
-
     function noteAt(cx, cy) {
-      const w = screenToWorld(cx, cy);
       for (const n of [...notes].reverse()) {
         const s = worldToScreen(n.x, n.y);
-        const r = nodeRadius(n) * vpScale;
-        if (Math.hypot(s.x - cx, s.y - cy) < r + 4) return n;
+        if (Math.hypot(s.x - cx, s.y - cy) < nodeRadius(n) * vpScale + 4) return n;
       }
       return null;
     }
 
-    // ── RENDER ────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════════
+    //  RENDER
+    // ═══════════════════════════════════════════════════════════════════
     function resizeCanvas() {
-      const rect = canvas.parentElement.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
-      markDirty();
+      const r = canvas.parentElement.getBoundingClientRect();
+      canvas.width = r.width; canvas.height = r.height; markDirty();
     }
 
-    let dirty = true;
+
     function markDirty() { dirty = true; }
 
     function draw() {
       if (dirty) {
         dirty = false;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Search filter
         const q = document.getElementById('searchInput').value.toLowerCase();
 
-        // Draw links
         links.forEach(l => {
-          const from = notes.find(n => n.id === l.from);
-          const to = notes.find(n => n.id === l.to);
-          if (!from || !to) return;
-          const fs = worldToScreen(from.x, from.y);
-          const ts = worldToScreen(to.x, to.y);
-          const isSelected = selectedNote && (selectedNote.id === l.from || selectedNote.id === l.to);
-          ctx.beginPath();
-          ctx.moveTo(fs.x, fs.y);
-          ctx.lineTo(ts.x, ts.y);
-          ctx.strokeStyle = isSelected ? 'rgba(0,170,170,0.4)' : 'rgba(255,255,255,0.07)';
-          ctx.lineWidth = isSelected ? 1.5 : 1;
-          ctx.stroke();
+          const f = notes.find(n => n.id === l.from), t = notes.find(n => n.id === l.to);
+          if (!f || !t) return;
+          const fs = worldToScreen(f.x, f.y), ts = worldToScreen(t.x, t.y);
+          const sel = selectedNote && (selectedNote.id === l.from || selectedNote.id === l.to);
+          ctx.beginPath(); ctx.moveTo(fs.x, fs.y); ctx.lineTo(ts.x, ts.y);
+          ctx.strokeStyle = sel ? 'rgba(0,170,170,0.4)' : 'rgba(255,255,255,0.07)';
+          ctx.lineWidth = sel ? 1.5 : 1; ctx.stroke();
         });
 
-        // Draw nodes
         notes.forEach(n => {
           const s = worldToScreen(n.x, n.y);
           const r = nodeRadius(n) * vpScale;
           const color = nodeColor(n);
-          const isSelected = selectedNote?.id === n.id;
-          const isHovered = hoveredNote?.id === n.id;
-          const dimmed = q && !n.title.toLowerCase().includes(q) && !n.content.toLowerCase().includes(q);
-
+          const isSel = selectedNote?.id === n.id;
+          const isHov = hoveredNote?.id === n.id;
+          const dimmed = q && !n.title.toLowerCase().includes(q) && !(n.content || '').toLowerCase().includes(q);
           ctx.globalAlpha = dimmed ? 0.15 : 1;
-
-          // Glow
-          if (isSelected || isHovered) {
+          if (isSel || isHov) {
             const grd = ctx.createRadialGradient(s.x, s.y, r, s.x, s.y, r * 3);
-            grd.addColorStop(0, color + '40');
-            grd.addColorStop(1, 'transparent');
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, r * 3, 0, Math.PI * 2);
-            ctx.fillStyle = grd;
-            ctx.fill();
+            grd.addColorStop(0, color + '40'); grd.addColorStop(1, 'transparent');
+            ctx.beginPath(); ctx.arc(s.x, s.y, r * 3, 0, Math.PI * 2); ctx.fillStyle = grd; ctx.fill();
           }
-
-          // Node circle
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
-          ctx.fillStyle = isSelected ? color : color + '33';
-          ctx.fill();
-          ctx.strokeStyle = isSelected ? color : color + 'aa';
-          ctx.lineWidth = isSelected ? 2 : 1;
-          ctx.stroke();
-
-          // Label
+          ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+          ctx.fillStyle = isSel ? color : color + '33'; ctx.fill();
+          ctx.strokeStyle = isSel ? color : color + 'aa';
+          ctx.lineWidth = isSel ? 2 : 1; ctx.stroke();
           if (vpScale > 0.4) {
-            ctx.fillStyle = dimmed ? '#4e4a62' : (isSelected ? '#dcd8f0' : '#8a859e');
-            const fs = Math.max(9, Math.min(13, 11 * vpScale));
-            ctx.font = `${fs}px "Martian Mono", monospace`;
-            ctx.textAlign = 'center';
+            ctx.fillStyle = dimmed ? '#4e4a62' : (isSel ? '#dcd8f0' : '#8a859e');
+            const fs2 = Math.max(9, Math.min(13, 11 * vpScale));
+            ctx.font = `${fs2}px "Martian Mono",monospace`; ctx.textAlign = 'center';
             const label = n.title.length > 20 ? n.title.slice(0, 18) + '…' : n.title;
             ctx.fillText(label, s.x, s.y + r + 14 * vpScale);
           }
-
           ctx.globalAlpha = 1;
         });
-
         drawMinimap();
-      } // end if dirty
+      }
       requestAnimationFrame(draw);
     }
 
     function drawMinimap() {
       const W = miniCanvas.width = 140, H = miniCanvas.height = 90;
-      miniCtx.clearRect(0, 0, W, H);
-      miniCtx.fillStyle = '#10101a';
-      miniCtx.fillRect(0, 0, W, H);
-
+      miniCtx.clearRect(0, 0, W, H); miniCtx.fillStyle = '#10101a'; miniCtx.fillRect(0, 0, W, H);
       if (!notes.length) return;
       const xs = notes.map(n => n.x), ys = notes.map(n => n.y);
       const minX = Math.min(...xs) - 60, maxX = Math.max(...xs) + 60;
       const minY = Math.min(...ys) - 60, maxY = Math.max(...ys) + 60;
-      const scaleX = W / (maxX - minX), scaleY = H / (maxY - minY);
-      const sc = Math.min(scaleX, scaleY) * 0.85;
-      const ox = W / 2 - (minX + maxX) / 2 * sc;
-      const oy = H / 2 - (minY + maxY) / 2 * sc;
-
+      const sc = Math.min(W / (maxX - minX), H / (maxY - minY)) * 0.85;
+      const ox = W / 2 - (minX + maxX) / 2 * sc, oy = H / 2 - (minY + maxY) / 2 * sc;
       links.forEach(l => {
         const f = notes.find(n => n.id === l.from), t = notes.find(n => n.id === l.to);
         if (!f || !t) return;
-        miniCtx.beginPath();
-        miniCtx.moveTo(f.x * sc + ox, f.y * sc + oy);
-        miniCtx.lineTo(t.x * sc + ox, t.y * sc + oy);
-        miniCtx.strokeStyle = 'rgba(255,255,255,0.08)';
-        miniCtx.lineWidth = 0.5;
-        miniCtx.stroke();
+        miniCtx.beginPath(); miniCtx.moveTo(f.x * sc + ox, f.y * sc + oy); miniCtx.lineTo(t.x * sc + ox, t.y * sc + oy);
+        miniCtx.strokeStyle = 'rgba(255,255,255,0.08)'; miniCtx.lineWidth = 0.5; miniCtx.stroke();
       });
-
       notes.forEach(n => {
-        miniCtx.beginPath();
-        miniCtx.arc(n.x * sc + ox, n.y * sc + oy, 3, 0, Math.PI * 2);
-        miniCtx.fillStyle = nodeColor(n) + 'cc';
-        miniCtx.fill();
+        miniCtx.beginPath(); miniCtx.arc(n.x * sc + ox, n.y * sc + oy, 3, 0, Math.PI * 2);
+        miniCtx.fillStyle = nodeColor(n) + 'cc'; miniCtx.fill();
       });
     }
 
-    // ── INTERACTION ───────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════════
+    //  CANVAS INTERACTION
+    // ═══════════════════════════════════════════════════════════════════
     canvas.addEventListener('mousedown', e => {
       markDirty();
       const { x: cx, y: cy } = canvasXY(e);
       const hit = noteAt(cx, cy);
       if (hit) {
-        nodeDragging = hit;
-        nodeDragMoved = false;
-        nodeDragStartX = cx;
-        nodeDragStartY = cy;
-        const s = worldToScreen(hit.x, hit.y);
-        nodeDragOffX = cx - s.x;
-        nodeDragOffY = cy - s.y;
+        nodeDragging = hit; nodeDragMoved = false; nodeDragStartX = cx; nodeDragStartY = cy;
+        const s = worldToScreen(hit.x, hit.y); nodeDragOffX = cx - s.x; nodeDragOffY = cy - s.y;
         canvas.classList.add('dragging');
       } else {
-        isDragging = true;
-        dragStartX = cx; dragStartY = cy;
-        dragVpX = vpX; dragVpY = vpY;
+        isDragging = true; dragStartX = cx; dragStartY = cy; dragVpX = vpX; dragVpY = vpY;
         canvas.classList.add('dragging');
       }
     });
@@ -896,8 +1277,7 @@
       markDirty();
       const { x: cx, y: cy } = canvasXY(e);
       if (nodeDragging) {
-        const dist = Math.hypot(cx - nodeDragStartX, cy - nodeDragStartY);
-        if (dist > 5) {
+        if (Math.hypot(cx - nodeDragStartX, cy - nodeDragStartY) > 5) {
           nodeDragMoved = true;
           const w = screenToWorld(cx - nodeDragOffX, cy - nodeDragOffY);
           nodeDragging.x = w.x; nodeDragging.y = w.y;
@@ -905,59 +1285,50 @@
         return;
       }
       if (isDragging) {
-        vpX = dragVpX + (cx - dragStartX) / vpScale;
-        vpY = dragVpY + (cy - dragStartY) / vpScale;
-        return;
+        vpX = dragVpX + (cx - dragStartX) / vpScale; vpY = dragVpY + (cy - dragStartY) / vpScale; return;
       }
-      const hit = noteAt(cx, cy);
-      hoveredNote = hit;
-      canvas.style.cursor = hit ? 'pointer' : 'grab';
+      hoveredNote = noteAt(cx, cy);
+      canvas.style.cursor = hoveredNote ? 'pointer' : 'grab';
     });
 
     canvas.addEventListener('mouseup', e => {
       if (nodeDragging) {
-        if (!nodeDragMoved) openNote(nodeDragging);
-        else saveToStorage();
-        nodeDragging = null;
-        nodeDragMoved = false;
-        canvas.classList.remove('dragging');
-        return;
+        if (!nodeDragMoved) openNote(nodeDragging); else saveAll();
+        nodeDragging = null; nodeDragMoved = false; canvas.classList.remove('dragging'); return;
       }
       if (isDragging) {
         const { x: cx, y: cy } = canvasXY(e);
-        const dx = Math.abs(cx - dragStartX), dy = Math.abs(cy - dragStartY);
-        if (dx < 4 && dy < 4) closePanel();
+        if (Math.abs(cx - dragStartX) < 4 && Math.abs(cy - dragStartY) < 4) closePanel();
         isDragging = false; canvas.classList.remove('dragging');
       }
     });
 
     canvas.addEventListener('wheel', e => {
       e.preventDefault();
-      const factor = e.deltaY > 0 ? 0.9 : 1.1;
-      vpScale = Math.max(0.2, Math.min(3, vpScale * factor));
-      markDirty();
+      vpScale = Math.max(0.2, Math.min(3, vpScale * (e.deltaY > 0 ? 0.9 : 1.1))); markDirty();
     }, { passive: false });
 
-    // ── NOTE PANEL ────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════════
+    //  NOTE PANEL
+    // ═══════════════════════════════════════════════════════════════════
     function openNote(note) {
-      selectedNote = note;
-      markDirty();
+      selectedNote = note; markDirty();
       document.getElementById('notePanel').classList.add('open');
       document.getElementById('panelNoteId').textContent = `note #${note.id}`;
-      document.getElementById('noteTitle').value = note.title;
-      document.getElementById('noteContent').value = note.content;
+      document.getElementById('noteTitle').value = note.title || '';
+      document.getElementById('noteContent').value = note.content || '';
       autoResize(document.getElementById('noteTitle'));
-
-      // Tags
-      document.querySelectorAll('.meta-tag').forEach(el => {
-        el.classList.toggle('selected', note.tags?.includes(el.dataset.tag));
-      });
-
-      // Links
+      renderTagsPanel();
+      document.querySelectorAll('.meta-tag').forEach(el =>
+        el.classList.toggle('selected', note.tags?.includes(el.dataset.tag)));
       renderLinkList(note);
-      // Clear search
       const ls = document.getElementById('linkSearch');
       if (ls) { ls.value = ''; closeLinkResults(); }
+    }
+
+    function closePanel() {
+      document.getElementById('notePanel').classList.remove('open');
+      selectedNote = null; markDirty();
     }
 
     function renderLinkList(note) {
@@ -965,80 +1336,51 @@
         .filter(l => l.from === note.id || l.to === note.id)
         .map(l => notes.find(n => n.id === (l.from === note.id ? l.to : l.from)))
         .filter(Boolean);
-
-      const list = document.getElementById('linkList');
-      list.innerHTML = connected.map(n => `
+      document.getElementById('linkList').innerHTML = connected.map(n => `
     <div class="link-item" onclick="openNote(notes.find(x=>x.id===${n.id}))">
       <div class="link-dot" style="background:${nodeColor(n)}"></div>
       <span>${n.title || 'Untitled'}</span>
       <span class="link-remove" onclick="event.stopPropagation();removeLink(${note.id},${n.id})">×</span>
-    </div>
-  `).join('') || `<div style="font-size:0.75rem;color:var(--ink-dim);font-style:italic;padding:4px 0">No connections yet</div>`;
+    </div>`).join('') ||
+        `<div style="font-size:0.8rem;color:var(--ink-dim);font-family:'Cormorant Garamond',serif;font-style:italic;padding:4px 0">No connections yet</div>`;
     }
 
     function onLinkSearch() {
       if (!selectedNote) return;
       const q = document.getElementById('linkSearch').value.toLowerCase();
       const results = document.getElementById('linkResults');
-      const alreadyLinked = id => links.some(l =>
-        (l.from === selectedNote.id && l.to === id) ||
-        (l.from === id && l.to === selectedNote.id)
-      );
+      const isLinked = id => links.some(l => (l.from === selectedNote.id && l.to === id) || (l.from === id && l.to === selectedNote.id));
       const candidates = notes
         .filter(n => n.id !== selectedNote.id)
         .filter(n => !q || (n.title || 'Untitled').toLowerCase().includes(q));
-
       if (!candidates.length) {
         results.innerHTML = `<div style="padding:10px 14px;font-size:0.85rem;color:var(--ink-dim);font-family:'Cormorant Garamond',serif;font-style:italic">No notes found</div>`;
-        results.classList.add('open');
-        return;
+        results.classList.add('open'); return;
       }
-
       results.innerHTML = candidates.slice(0, 10).map(n => {
-        const linked = alreadyLinked(n.id);
-        return `
-    <div class="link-result-item ${linked ? 'already-linked' : ''}"
-      onmousedown="event.preventDefault(); addLinkById(${n.id})">
+        const linked = isLinked(n.id);
+        return `<div class="link-result-item ${linked ? 'already-linked' : ''}" onmousedown="event.preventDefault();addLinkById(${n.id})">
       <div class="link-dot" style="background:${nodeColor(n)}"></div>
       <span>${n.title || 'Untitled'}</span>
-      ${linked ? '<span style="margin-left:auto;font-size:0.55rem;color:var(--cyan);font-family:\'Martian Mono\',monospace">✓</span>' : ''}
+      ${linked ? `<span style="margin-left:auto;font-size:0.55rem;color:var(--cyan);font-family:'Martian Mono',monospace">✓</span>` : ''}
     </div>`;
       }).join('');
       results.classList.add('open');
     }
 
-    function closeLinkResults() {
-      document.getElementById('linkResults')?.classList.remove('open');
-    }
+    function closeLinkResults() { document.getElementById('linkResults')?.classList.remove('open'); }
 
     function addLinkById(toId) {
       if (!selectedNote) return;
-      const existingIdx = links.findIndex(l =>
-        (l.from === selectedNote.id && l.to === toId) ||
-        (l.from === toId && l.to === selectedNote.id)
-      );
-      if (existingIdx >= 0) {
-        links.splice(existingIdx, 1); // toggle off
-      } else {
-        links.push({ from: selectedNote.id, to: toId }); // toggle on
-      }
-      saveToStorage();
-      markDirty();
-      renderLinkList(selectedNote);
-      onLinkSearch(); // refresh list in place
-      document.getElementById('linkSearch').focus();
+      const idx = links.findIndex(l => (l.from === selectedNote.id && l.to === toId) || (l.from === toId && l.to === selectedNote.id));
+      if (idx >= 0) links.splice(idx, 1); else links.push({ from: selectedNote.id, to: toId });
+      saveAll(); markDirty(); renderLinkList(selectedNote);
+      onLinkSearch(); document.getElementById('linkSearch').focus();
     }
 
-    function closePanel() {
-      document.getElementById('notePanel').classList.remove('open');
-      selectedNote = null;
-      markDirty();
-    }
-
-    function toggleTag(tag) {
-      const el = document.querySelector(`.meta-tag[data-tag="${tag}"]`);
-      el.classList.toggle('selected');
-      autoSave();
+    function removeLink(a, b) {
+      links = links.filter(l => !((l.from === a && l.to === b) || (l.from === b && l.to === a)));
+      saveAll(); markDirty(); if (selectedNote) renderLinkList(selectedNote);
     }
 
     function autoSave() {
@@ -1046,58 +1388,39 @@
       selectedNote.title = document.getElementById('noteTitle').value.trim() || 'Untitled';
       selectedNote.content = document.getElementById('noteContent').value;
       selectedNote.tags = [...document.querySelectorAll('.meta-tag.selected')].map(el => el.dataset.tag);
-      markDirty();
-      saveToStorage();
+      markDirty(); saveAll();
     }
 
-    function saveNote() {
-      autoSave();
-      toast('Saved');
-    }
+    function saveNote() { autoSave(); toast('Saved'); }
 
     function deleteNote() {
       if (!selectedNote) return;
       notes = notes.filter(n => n.id !== selectedNote.id);
       links = links.filter(l => l.from !== selectedNote.id && l.to !== selectedNote.id);
-      saveToStorage();
-      closePanel();
-      markDirty();
-      toast('Note deleted');
+      saveAll(); closePanel(); markDirty(); toast('Note deleted');
     }
 
-    function removeLink(a, b) {
-      links = links.filter(l => !((l.from === a && l.to === b) || (l.from === b && l.to === a)));
-      saveToStorage();
-      markDirty();
-      if (selectedNote) renderLinkList(selectedNote);
-    }
-
-    // ── NEW NOTE ──────────────────────────────────────────────────────
     function newNote() {
       const w = screenToWorld(canvas.width / 2 + (Math.random() - 0.5) * 200, canvas.height / 2 + (Math.random() - 0.5) * 200);
       const note = { id: nextId++, title: '', content: '', tags: [], x: w.x, y: w.y };
-      notes.push(note);
-      saveToStorage();
-      openNote(note);
+      notes.push(note); saveAll(); openNote(note);
       document.getElementById('noteTitle').focus();
     }
 
-    function resetView() { vpX = 0; vpY = 0; vpScale = 1; }
+    function resetView() { vpX = 0; vpY = 0; vpScale = 1; markDirty(); }
 
-    function autoResize(el) {
-      el.style.height = 'auto';
-      el.style.height = el.scrollHeight + 'px';
-    }
+    function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 
     function toast(msg) {
       const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
+      t.textContent = msg; t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 2000);
     }
 
     document.getElementById('searchInput').addEventListener('input', markDirty);
     document.addEventListener('click', e => {
+      if (!e.target.closest('.garden-switcher') && !e.target.closest('.garden-popup'))
+        document.getElementById('gardenPopup').classList.remove('open');
       if (!e.target.closest('.link-search-wrap')) closeLinkResults();
     });
 
