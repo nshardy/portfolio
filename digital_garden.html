@@ -614,7 +614,33 @@
       seed.forEach(n => { notes.push(n); if (n.id >= nextId) nextId = n.id + 1; });
       seedLinks.forEach(([a, b]) => links.push({ from: a, to: b }));
     }
-    seedData();
+    function saveToStorage() {
+      try {
+        localStorage.setItem('garden_notes', JSON.stringify(notes));
+        localStorage.setItem('garden_links', JSON.stringify(links));
+        localStorage.setItem('garden_nextId', String(nextId));
+      } catch (e) { }
+    }
+
+    function loadFromStorage() {
+      try {
+        const savedNotes = localStorage.getItem('garden_notes');
+        const savedLinks = localStorage.getItem('garden_links');
+        const savedId = localStorage.getItem('garden_nextId');
+        if (savedNotes) {
+          notes = JSON.parse(savedNotes);
+          links = JSON.parse(savedLinks || '[]');
+          nextId = parseInt(savedId || '1');
+          return true;
+        }
+      } catch (e) { }
+      return false;
+    }
+
+    if (!loadFromStorage()) {
+      seedData();
+      saveToStorage();
+    }
 
     // ── COORDINATE HELPERS ────────────────────────────────────────────
     function worldToScreen(x, y) {
@@ -816,6 +842,7 @@
     canvas.addEventListener('mouseup', e => {
       if (nodeDragging) {
         if (!nodeDragMoved) openNote(nodeDragging);
+        else saveToStorage();
         nodeDragging = null;
         nodeDragMoved = false;
         canvas.classList.remove('dragging');
@@ -896,6 +923,7 @@
       selectedNote.content = document.getElementById('noteContent').value;
       selectedNote.tags = [...document.querySelectorAll('.meta-tag.selected')].map(el => el.dataset.tag);
       markDirty();
+      saveToStorage();
     }
 
     function saveNote() {
@@ -907,7 +935,9 @@
       if (!selectedNote) return;
       notes = notes.filter(n => n.id !== selectedNote.id);
       links = links.filter(l => l.from !== selectedNote.id && l.to !== selectedNote.id);
+      saveToStorage();
       closePanel();
+      markDirty();
       toast('Note deleted');
     }
 
@@ -921,11 +951,15 @@
       );
       if (!exists) { links.push({ from: selectedNote.id, to: toId }); }
       sel.value = '';
+      saveToStorage();
+      markDirty();
       renderLinkList(selectedNote);
     }
 
     function removeLink(a, b) {
       links = links.filter(l => !((l.from === a && l.to === b) || (l.from === b && l.to === a)));
+      saveToStorage();
+      markDirty();
       if (selectedNote) renderLinkList(selectedNote);
     }
 
@@ -934,6 +968,7 @@
       const w = screenToWorld(canvas.width / 2 + (Math.random() - 0.5) * 200, canvas.height / 2 + (Math.random() - 0.5) * 200);
       const note = { id: nextId++, title: '', content: '', tags: [], x: w.x, y: w.y };
       notes.push(note);
+      saveToStorage();
       openNote(note);
       document.getElementById('noteTitle').focus();
     }
