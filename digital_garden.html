@@ -30,6 +30,7 @@
       --green: #4ec994;
       --yellow: #c9a96e;
       --red: #e0786a;
+      --icon-sz: 1.0rem;
     }
 
     html.light {
@@ -50,19 +51,14 @@
     /* THEME TOGGLE */
     .theme-btn {
       font-family: 'Martian Mono', monospace;
-      font-size: 0.68rem;
+      font-size: 0.5rem;
       background: none;
       border: 1px solid var(--border);
       color: var(--ink-mid);
-      padding: 6px 10px;
+      padding: 7px 14px;
       cursor: pointer;
       transition: all 0.2s;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
-      height: 34px;
+      letter-spacing: 0.12em;
     }
 
     .theme-btn:hover {
@@ -152,7 +148,7 @@
       border: none;
       color: var(--ink-dim);
       cursor: pointer;
-      font-size: 0.6rem;
+      font-size: var(--icon-sz);
       padding: 2px 6px;
       transition: color 0.2s;
     }
@@ -225,7 +221,7 @@
     }
 
     .garden-item-del {
-      font-size: 0.8rem;
+      font-size: var(--icon-sz);
       color: var(--ink-dim);
       opacity: 0;
       transition: opacity 0.15s;
@@ -241,7 +237,7 @@
     }
 
     .garden-item-ren {
-      font-size: 0.7rem;
+      font-size: var(--icon-sz);
       color: var(--ink-dim);
       opacity: 0;
       transition: opacity 0.15s;
@@ -396,7 +392,7 @@
       color: var(--ink-dim);
       cursor: pointer;
       letter-spacing: 0.1em;
-      padding: 4px 8px;
+      padding: 7px 14px;
       border: 1px solid var(--border);
       background: none;
       font-family: 'Martian Mono', monospace;
@@ -466,7 +462,7 @@
     }
 
     .meta-tag {
-      font-size: 0.45rem;
+      font-size: 0.5rem;
       letter-spacing: 0.1em;
       padding: 3px 8px;
       border: 1px solid var(--border);
@@ -493,7 +489,7 @@
     }
 
     .meta-tag-add {
-      font-size: 0.45rem;
+      font-size: 0.5rem;
       letter-spacing: 0.1em;
       padding: 3px 8px;
       border: 1px dashed var(--border);
@@ -536,7 +532,7 @@
       border: 1px solid var(--border);
       color: var(--ink);
       font-family: 'Martian Mono', monospace;
-      font-size: 0.52rem;
+      font-size: 0.5rem;
       padding: 5px 8px;
       outline: none;
     }
@@ -628,7 +624,7 @@
     .link-remove {
       margin-left: auto;
       opacity: 0;
-      font-size: 1.0rem;
+      font-size: var(--icon-sz);
       font-family: 'Martian Mono', monospace;
       line-height: 0;
       color: var(--red);
@@ -727,12 +723,12 @@
 
     .del-btn {
       font-family: 'Martian Mono', monospace;
-      font-size: 0.48rem;
+      font-size: 0.5rem;
       letter-spacing: 0.1em;
       background: none;
       border: 1px solid rgba(224, 120, 106, 0.2);
       color: var(--red);
-      padding: 6px 12px;
+      padding: 7px 14px;
       cursor: pointer;
       transition: all 0.2s;
       text-transform: uppercase;
@@ -744,12 +740,12 @@
 
     .save-note-btn {
       font-family: 'Martian Mono', monospace;
-      font-size: 0.48rem;
+      font-size: 0.5rem;
       letter-spacing: 0.1em;
       background: var(--cyan);
       color: var(--bg);
       border: none;
-      padding: 6px 14px;
+      padding: 7px 14px;
       cursor: pointer;
       transition: all 0.2s;
       text-transform: uppercase;
@@ -783,9 +779,9 @@
       border: 1px solid var(--border);
       color: var(--ink);
       font-family: 'Martian Mono', monospace;
-      font-size: 0.55rem;
+      font-size: 0.5rem;
       letter-spacing: 0.08em;
-      padding: 8px 14px;
+      padding: 7px 14px;
       outline: none;
       width: 200px;
       transition: border-color 0.2s;
@@ -832,6 +828,7 @@
 
     .legend-toggle {
       color: var(--ink-dim);
+      font-size: var(--icon-sz);
     }
 
     .legend-body {
@@ -928,7 +925,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.46rem;
+      font-size: 0.5rem;
       letter-spacing: 0.1em;
       color: var(--ink-dim);
       text-transform: uppercase;
@@ -959,7 +956,7 @@
 
     .modal-checkbox.checked::after {
       content: '✓';
-      font-size: 0.5rem;
+      font-size: var(--icon-sz);
       color: var(--cyan);
       line-height: 1;
     }
@@ -1013,7 +1010,7 @@
     <div class="garden-popup-footer">
       <input class="garden-new-input" id="gardenNewInput" placeholder="New garden name…"
         onkeydown="if(event.key==='Enter')createGarden()">
-      <button class="tb-btn" onclick="createGarden()" style="padding:6px 10px;font-size:0.46rem">Create</button>
+      <button class="tb-btn" onclick="createGarden()" style="padding:6px 10px">Create</button>
     </div>
   </div>
 
@@ -1035,8 +1032,8 @@
           <div class="new-tag-row">
             <input class="new-tag-input" id="newTagName" placeholder="tag name…" maxlength="20"
               onkeydown="if(event.key==='Enter')createTag()">
-            <button class="tb-btn" onclick="createTag()" style="padding:4px 8px;font-size:0.44rem">Add</button>
-            <button class="tb-btn" onclick="closeNewTagForm()" style="padding:4px 6px;font-size:0.44rem">✕</button>
+            <button class="tb-btn" onclick="createTag()" style="padding:4px 8px">Add</button>
+            <button class="tb-btn" onclick="closeNewTagForm()" style="padding:4px 6px">✕</button>
           </div>
           <div class="color-swatches" id="colorSwatches"></div>
         </div>
@@ -1644,7 +1641,7 @@
         return `<div class="link-result-item ${linked ? 'already-linked' : ''}" onmousedown="event.preventDefault();addLinkById(${n.id})">
       <div class="link-dot" style="background:${nodeColor(n)}"></div>
       <span>${n.title || 'Untitled'}</span>
-      ${linked ? `<span style="margin-left:auto;font-size:0.55rem;color:var(--cyan);font-family:'Martian Mono',monospace">✓</span>` : ''}
+      ${linked ? `<span style="margin-left:auto;font-size:var(--icon-sz);color:var(--cyan);font-family:'Martian Mono',monospace">✓</span>` : ''}
     </div>`;
       }).join('');
       results.classList.add('open');
