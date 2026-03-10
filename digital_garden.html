@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Garden — Digital Notes</title>
   <link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Martian+Mono:wght@200;300;400&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=JetBrains+Mono:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400;500&display=swap"
     rel="stylesheet">
   <style>
     *,
@@ -33,6 +33,10 @@
       --icon-sz: 0.75rem;
     }
 
+    * {
+      font-feature-settings: "liga" 1, "calt" 1;
+    }
+
     html.light {
       --bg: #f4f2ee;
       --surface: #eceae4;
@@ -50,7 +54,7 @@
 
     /* THEME TOGGLE */
     .theme-btn {
-      font-family: 'Martian Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.5rem;
       background: none;
       border: 1px solid var(--border);
@@ -75,7 +79,7 @@
     body {
       background: var(--bg);
       color: var(--ink);
-      font-family: 'Martian Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       display: flex;
       flex-direction: column;
       user-select: none;
@@ -300,7 +304,7 @@
     }
 
     .tb-btn {
-      font-family: 'Martian Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.5rem;
       letter-spacing: 0.12em;
       padding: 7px 14px;
@@ -395,7 +399,7 @@
       padding: 7px 14px;
       border: 1px solid var(--border);
       background: none;
-      font-family: 'Martian Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       transition: color 0.2s;
       text-transform: uppercase;
     }
@@ -537,7 +541,7 @@
       cursor: pointer;
       transition: all 0.2s;
       background: none;
-      font-family: 'Martian Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .meta-tag-add:hover {
@@ -571,7 +575,7 @@
       background: var(--surface);
       border: 1px solid var(--border);
       color: var(--ink);
-      font-family: 'Martian Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.5rem;
       padding: 5px 8px;
       outline: none;
@@ -660,8 +664,8 @@
       width: 100%;
       min-height: 100px;
       margin-bottom: 12px;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.05rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
       font-weight: 300;
       color: var(--ink-mid);
       line-height: 1.8;
@@ -676,8 +680,8 @@
     .md-preview h1,
     .md-preview h2,
     .md-preview h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 400;
       color: var(--ink);
       margin: 0.8em 0 0.3em;
       letter-spacing: -0.01em;
@@ -713,7 +717,7 @@
     }
 
     .md-preview code {
-      font-family: 'Martian Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.78em;
       background: var(--lift);
       color: var(--cyan);
@@ -769,6 +773,63 @@
       text-decoration: underline;
     }
 
+    /* GFM task list checkboxes */
+    .md-preview ul.contains-task-list {
+      list-style: none;
+      padding-left: 0.4em;
+    }
+
+    .md-preview .task-list-item {
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+    }
+
+    .md-preview .task-list-item input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 11px;
+      height: 11px;
+      border: 1px solid var(--border);
+      background: none;
+      cursor: default;
+      flex-shrink: 0;
+      margin: 0;
+      position: relative;
+      top: 1px;
+      transition: all 0.15s;
+    }
+
+    .md-preview .task-list-item input[type="checkbox"]:checked {
+      background: var(--cyan);
+      border-color: var(--cyan);
+    }
+
+    .md-preview .task-list-item input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      left: 2px;
+      top: -1px;
+      width: 5px;
+      height: 8px;
+      border: 2px solid var(--bg);
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+
+    .md-preview .task-list-item.checked>*:not(input) {
+      opacity: 0.45;
+      text-decoration: line-through;
+    }
+
+    /* highlight.js overrides to match design */
+    .md-preview .hljs {
+      background: var(--lift) !important;
+      color: var(--ink-mid) !important;
+      padding: 0 !important;
+    }
+
     .md-preview img {
       max-width: 100%;
       height: auto;
@@ -797,7 +858,7 @@
     .md-preview th {
       background: var(--lift);
       color: var(--ink);
-      font-family: 'Martian Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.7rem;
       letter-spacing: 0.06em;
       font-weight: 400;
@@ -820,7 +881,7 @@
     }
 
     .mode-btn {
-      font-family: 'Martian Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.44rem;
       letter-spacing: 0.1em;
       padding: 1px 7px;
@@ -884,7 +945,7 @@
       margin-left: auto;
       opacity: 0;
       font-size: var(--icon-sz);
-      font-family: 'Martian Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       line-height: 0;
       color: var(--red);
       transition: opacity 0.2s;
@@ -982,7 +1043,7 @@
     }
 
     .del-btn {
-      font-family: 'Martian Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.5rem;
       letter-spacing: 0.1em;
       background: none;
@@ -999,7 +1060,7 @@
     }
 
     .save-note-btn {
-      font-family: 'Martian Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.5rem;
       letter-spacing: 0.1em;
       background: var(--cyan);
@@ -1038,7 +1099,7 @@
       background: var(--surface);
       border: 1px solid var(--border);
       color: var(--ink);
-      font-family: 'Martian Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.5rem;
       letter-spacing: 0.08em;
       padding: 7px 14px;
@@ -1229,7 +1290,7 @@
       transform: translateX(-50%) translateY(10px);
       background: var(--cyan);
       color: var(--bg);
-      font-family: 'Martian Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.52rem;
       letter-spacing: 0.1em;
       padding: 8px 20px;
@@ -1373,6 +1434,9 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
   <script>
     // ═══════════════════════════════════════════════════════════════════
     //  CONSTANTS
@@ -1761,7 +1825,7 @@
               ? (isLight ? '#a09cba' : '#4e4a62')
               : (isSel ? (isLight ? '#1c1a26' : '#dcd8f0') : (isLight ? '#5a5670' : '#8a859e'));
             const fs2 = Math.max(9, Math.min(13, 11 * vpScale));
-            ctx.font = `${fs2}px "Martian Mono",monospace`; ctx.textAlign = 'center';
+            ctx.font = `${fs2}px "JetBrains Mono",monospace`; ctx.textAlign = 'center';
             const label = n.title.length > 20 ? n.title.slice(0, 18) + '…' : n.title;
             ctx.fillText(label, s.x, s.y + r + 14 * vpScale);
           }
@@ -1914,7 +1978,7 @@
         return `<div class="link-result-item ${linked ? 'already-linked' : ''}" onmousedown="event.preventDefault();addLinkById(${n.id})">
       <div class="link-dot" style="background:${nodeColor(n)}"></div>
       <span>${n.title || 'Untitled'}</span>
-      ${linked ? `<span style="margin-left:auto;font-size:var(--icon-sz);color:var(--cyan);font-family:'Martian Mono',monospace">✓</span>` : ''}
+      ${linked ? `<span style="margin-left:auto;font-size:var(--icon-sz);color:var(--cyan);font-family:'JetBrains Mono',monospace">✓</span>` : ''}
     </div>`;
       }).join('');
       results.classList.add('open');
@@ -2003,174 +2067,31 @@
     // ═══════════════════════════════════════════════════════════════════
     //  MARKDOWN
     // ═══════════════════════════════════════════════════════════════════
+    // Set up marked once with a custom renderer for syntax highlighting
+    (function () {
+      const renderer = new marked.Renderer();
+      renderer.code = function (code, lang) {
+        // marked v9 passes an object or string depending on version
+        const rawCode = typeof code === 'object' ? code.text : code;
+        const rawLang = (typeof code === 'object' ? code.lang : lang) || '';
+        const validLang = rawLang && hljs.getLanguage(rawLang) ? rawLang : null;
+        const highlighted = validLang
+          ? hljs.highlight(rawCode, { language: validLang }).value
+          : hljs.highlightAuto(rawCode).value;
+        const langClass = validLang ? ` class="language-${validLang}"` : '';
+        return `<pre><code${langClass}>${highlighted}</code></pre>`;
+      };
+      marked.use({ renderer, gfm: true, breaks: true });
+    })();
+
     function renderMarkdown(src) {
-      if (!src) return '<span style="font-style:italic;color:var(--ink-dim)">Nothing here yet\u2026</span>';
-
-      function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-      // ── inline spans (applied inside block content) ─────────────────
-      function inline(s) {
-        return s
-          // images before links
-          .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%">')
-          // links
-          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-          // bold+italic
-          .replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>')
-          .replace(/___([^_]+)___/g, '<strong><em>$1</em></strong>')
-          // bold
-          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-          .replace(/__([^_]+)__/g, '<strong>$1</strong>')
-          // italic
-          .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
-          .replace(/_([^_\n]+)_/g, '<em>$1</em>')
-          // strikethrough
-          .replace(/~~([^~]+)~~/g, '<del>$1</del>')
-          // inline code (already escaped)
-          .replace(/`([^`]+)`/g, '<code>$1</code>');
-      }
-
-      const lines = src.split('\n');
-      const out = [];
-      let i = 0;
-      let inPara = false;
-      let inUl = false;   // unordered list depth
-      let inOl = false;
-      let inBq = false;
-      let inTable = false;
-
-      function closePara() { if (inPara) { out.push('</p>'); inPara = false; } }
-      function closeUl() { if (inUl) { out.push('</ul>'); inUl = false; } }
-      function closeOl() { if (inOl) { out.push('</ol>'); inOl = false; } }
-      function closeBq() { if (inBq) { out.push('</blockquote>'); inBq = false; } }
-      function closeTable() { if (inTable) { out.push('</tbody></table>'); inTable = false; } }
-      function closeAll() { closePara(); closeUl(); closeOl(); closeBq(); closeTable(); }
-
-      while (i < lines.length) {
-        const raw = lines[i];
-        const line = raw;
-        const trimmed = line.trim();
-
-        // ── fenced code block ────────────────────────────────────────
-        const fenceMatch = trimmed.match(/^```(\w*)$/);
-        if (fenceMatch) {
-          closeAll();
-          const lang = fenceMatch[1] || '';
-          const codeLines = [];
-          i++;
-          while (i < lines.length && lines[i].trim() !== '```') {
-            codeLines.push(esc(lines[i]));
-            i++;
-          }
-          const langAttr = lang ? ` class="language-${lang}"` : '';
-          out.push(`<pre><code${langAttr}>${codeLines.join('\n')}</code></pre>`);
-          i++;
-          continue;
-        }
-
-        // ── blank line ───────────────────────────────────────────────
-        if (!trimmed) {
-          closeAll();
-          i++; continue;
-        }
-
-        // ── ATX headings ────────────────────────────────────────────
-        const hMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
-        if (hMatch) {
-          closeAll();
-          const level = hMatch[1].length;
-          out.push(`<h${level}>${inline(esc(hMatch[2]))}</h${level}>`);
-          i++; continue;
-        }
-
-        // ── setext headings ─────────────────────────────────────────
-        if (i + 1 < lines.length) {
-          const next = lines[i + 1].trim();
-          if (/^=+$/.test(next) && trimmed) {
-            closeAll();
-            out.push(`<h1>${inline(esc(trimmed))}</h1>`);
-            i += 2; continue;
-          }
-          if (/^-+$/.test(next) && trimmed && next.length >= 2) {
-            closeAll();
-            out.push(`<h2>${inline(esc(trimmed))}</h2>`);
-            i += 2; continue;
-          }
-        }
-
-        // ── HR ───────────────────────────────────────────────────────
-        if (/^(\*{3,}|-{3,}|_{3,})$/.test(trimmed)) {
-          closeAll();
-          out.push('<hr>');
-          i++; continue;
-        }
-
-        // ── blockquote ───────────────────────────────────────────────
-        const bqMatch = trimmed.match(/^>\s?(.*)$/);
-        if (bqMatch) {
-          closeUl(); closeOl(); closePara(); closeTable();
-          if (!inBq) { out.push('<blockquote>'); inBq = true; }
-          out.push(`<p>${inline(esc(bqMatch[1]))}</p>`);
-          i++; continue;
-        } else if (inBq) {
-          closeBq();
-        }
-
-        // ── table ────────────────────────────────────────────────────
-        if (trimmed.includes('|') && i + 1 < lines.length && /^\|?[\s\-:|]+\|/.test(lines[i + 1])) {
-          closeAll();
-          // header row
-          const headers = trimmed.replace(/^\||\|$/g, '').split('|').map(c => `<th>${inline(esc(c.trim()))}</th>`).join('');
-          // alignment row — skip it
-          i += 2;
-          out.push(`<table><thead><tr>${headers}</tr></thead><tbody>`);
-          inTable = true;
-          // body rows
-          while (i < lines.length && lines[i].trim().includes('|') && lines[i].trim() !== '') {
-            const cells = lines[i].trim().replace(/^\||\|$/g, '').split('|').map(c => `<td>${inline(esc(c.trim()))}</td>`).join('');
-            out.push(`<tr>${cells}</tr>`);
-            i++;
-          }
-          closeTable();
-          continue;
-        }
-
-        // ── unordered list ───────────────────────────────────────────
-        const ulMatch = trimmed.match(/^[-*+]\s+(.+)$/);
-        if (ulMatch) {
-          closePara(); closeBq(); closeOl(); closeTable();
-          if (!inUl) { out.push('<ul>'); inUl = true; }
-          out.push(`<li>${inline(esc(ulMatch[1]))}</li>`);
-          i++; continue;
-        } else if (inUl) {
-          closeUl();
-        }
-
-        // ── ordered list ─────────────────────────────────────────────
-        const olMatch = trimmed.match(/^\d+[.)]\s+(.+)$/);
-        if (olMatch) {
-          closePara(); closeBq(); closeUl(); closeTable();
-          if (!inOl) { out.push('<ol>'); inOl = true; }
-          out.push(`<li>${inline(esc(olMatch[1]))}</li>`);
-          i++; continue;
-        } else if (inOl) {
-          closeOl();
-        }
-
-        // ── paragraph ────────────────────────────────────────────────
-        if (!inPara) { out.push('<p>'); inPara = true; }
-        else out.push('<br>');
-        out.push(inline(esc(trimmed)));
-        i++;
-      }
-
-      closeAll();
-      return out.join('');
+      if (!src || !src.trim()) return '<span style="font-style:italic;color:var(--ink-dim)">Nothing here yet…</span>';
+      return marked.parse(src);
     }
 
     let contentMode = 'edit';
 
-    function setContentMode(mode, clientX, clientY) {
+    function setContentMode(mode, caretPos) {
       contentMode = mode;
       const ta = document.getElementById('noteContent');
       const preview = document.getElementById('mdPreview');
@@ -2178,6 +2099,7 @@
       const btnPrev = document.getElementById('modePreview');
       if (mode === 'preview') {
         preview.innerHTML = renderMarkdown(ta.value);
+        previewSourceMap = buildPreviewSourceMap(ta.value, preview);
         preview.classList.add('active');
         ta.style.display = 'none';
         btnEdit.classList.remove('active');
@@ -2187,69 +2109,67 @@
         ta.style.display = '';
         btnEdit.classList.add('active');
         btnPrev.classList.remove('active');
-        // Place cursor at the character position corresponding to where the user clicked
-        if (clientX !== undefined && clientY !== undefined) {
-          // Map the click point in the preview back to a character offset in the textarea
-          const charPos = previewPointToTextOffset(clientX, clientY, ta.value);
-          ta.focus();
-          ta.setSelectionRange(charPos, charPos);
-        } else {
-          ta.focus();
+        ta.focus();
+        if (caretPos !== undefined) {
+          ta.setSelectionRange(caretPos, caretPos);
         }
       }
     }
 
-    // Given a click point in the rendered preview, find the closest character
-    // offset in the raw markdown source and return it.
-    function previewPointToTextOffset(cx, cy, src) {
-      // Use caretRangeFromPoint / caretPositionFromPoint to get the DOM text offset
-      let domOffset = 0;
-      let domNode = null;
+    // previewSourceMap[renderedCharIndex] = sourceCharIndex
+    // Rebuilt each time setContentMode('preview') is called.
+    let previewSourceMap = [];
 
-      if (document.caretRangeFromPoint) {
-        const range = document.caretRangeFromPoint(cx, cy);
-        if (range) { domNode = range.startContainer; domOffset = range.startOffset; }
-      } else if (document.caretPositionFromPoint) {
-        const pos = document.caretPositionFromPoint(cx, cy);
-        if (pos) { domNode = pos.offsetNode; domOffset = pos.offset; }
+    function buildPreviewSourceMap(src, previewEl) {
+      const rendered = previewEl.textContent;
+      const map = [];
+      let si = 0;
+      for (let ri = 0; ri < rendered.length; ri++) {
+        const rc = rendered[ri];
+        const rcWs = /\s/.test(rc);
+        while (si < src.length) {
+          const sc = src[si];
+          if (sc === rc || (rcWs && /\s/.test(sc))) break;
+          si++;
+        }
+        map.push(si);
+        if (si < src.length) si++;
       }
+      return map;
+    }
+    function previewPointToTextOffset(cx, cy) {
+      let domNode = null, domOffset = 0;
+      if (document.caretRangeFromPoint) {
+        const r = document.caretRangeFromPoint(cx, cy);
+        if (r) { domNode = r.startContainer; domOffset = r.startOffset; }
+      } else if (document.caretPositionFromPoint) {
+        const p = document.caretPositionFromPoint(cx, cy);
+        if (p) { domNode = p.offsetNode; domOffset = p.offset; }
+      }
+      if (!domNode || !previewSourceMap.length) return null;
 
-      if (!domNode) return src.length;
-
-      // Walk the text nodes in the preview to find how many rendered characters
-      // precede our target node, then add the offset within that node.
+      // Count rendered plain-text characters before the click point
       const preview = document.getElementById('mdPreview');
       const walker = document.createTreeWalker(preview, NodeFilter.SHOW_TEXT);
-      let renderedBefore = 0;
+      let renderedIdx = 0;
       let node;
       while ((node = walker.nextNode())) {
         if (node === domNode) {
-          renderedBefore += domOffset;
+          renderedIdx += domOffset;
           break;
         }
-        renderedBefore += node.textContent.length;
+        renderedIdx += node.textContent.length;
       }
 
-      // Now map renderedBefore (index into stripped preview text) back to src offset.
-      // Strip markdown syntax to get approximate plain text, then find closest match.
-      // Simple heuristic: scan src, counting non-syntax characters until we hit renderedBefore.
-      let srcIdx = 0, plainCount = 0;
-      while (srcIdx < src.length && plainCount < renderedBefore) {
-        const ch = src[srcIdx];
-        // Skip common markdown syntax characters that don't appear in preview text
-        if (ch === '*' || ch === '_' || ch === '`' || ch === '#' || ch === '~') {
-          srcIdx++;
-        } else {
-          plainCount++;
-          srcIdx++;
-        }
-      }
-      return Math.min(srcIdx, src.length);
+      if (renderedIdx < previewSourceMap.length) return previewSourceMap[renderedIdx];
+      return previewSourceMap[previewSourceMap.length - 1] ?? null;
     }
 
-    // Wire preview click: switch to edit and place cursor
+    // Wire preview click: resolve caret position while preview is still visible,
+    // then switch to edit and place cursor there
     document.getElementById('mdPreview').addEventListener('click', function (e) {
-      setContentMode('edit', e.clientX, e.clientY);
+      const pos = previewPointToTextOffset(e.clientX, e.clientY);
+      setContentMode('edit', pos ?? document.getElementById('noteContent').value.length);
     });
 
     // ═══════════════════════════════════════════════════════════════════
