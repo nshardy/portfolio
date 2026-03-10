@@ -795,6 +795,107 @@
       flex-shrink: 0;
     }
 
+    /* DELETE MODAL */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 8000;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 32px 36px;
+      max-width: 380px;
+      width: 90%;
+      transform: translateY(8px);
+      transition: transform 0.2s;
+    }
+
+    .modal-backdrop.open .modal {
+      transform: translateY(0);
+    }
+
+    .modal-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      font-weight: 300;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+
+    .modal-sub {
+      font-size: 0.52rem;
+      color: var(--ink-dim);
+      letter-spacing: 0.06em;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .modal-note-name {
+      color: var(--ink-mid);
+      font-style: italic;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-bottom: 18px;
+    }
+
+    .modal-skip-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.46rem;
+      letter-spacing: 0.1em;
+      color: var(--ink-dim);
+      text-transform: uppercase;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .modal-skip-wrap:hover {
+      color: var(--ink-mid);
+    }
+
+    .modal-checkbox {
+      width: 11px;
+      height: 11px;
+      border: 1px solid var(--border);
+      background: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: border-color 0.15s;
+    }
+
+    .modal-checkbox.checked {
+      border-color: var(--cyan);
+      background: rgba(0, 170, 170, 0.15);
+    }
+
+    .modal-checkbox.checked::after {
+      content: '✓';
+      font-size: 0.5rem;
+      color: var(--cyan);
+      line-height: 1;
+    }
+
     /* TOAST */
     .toast {
       position: fixed;
@@ -896,6 +997,25 @@
         <span class="legend-toggle" id="legendToggle">▴</span>
       </div>
       <div class="legend-body" id="legendBody"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="deleteModal">
+    <div class="modal">
+      <div class="modal-title">Delete note?</div>
+      <div class="modal-sub">
+        <span class="modal-note-name" id="modalNoteName"></span><br>
+        This cannot be undone.
+      </div>
+      <div class="modal-actions">
+        <button class="tb-btn" onclick="cancelDelete()">Cancel</button>
+        <button class="tb-btn" style="border-color:var(--red);color:var(--red)"
+          onclick="confirmDelete()">Delete</button>
+      </div>
+      <div class="modal-skip-wrap" onclick="toggleSkipConfirm()">
+        <div class="modal-checkbox" id="modalCheckbox"></div>
+        Don't ask again
+      </div>
     </div>
   </div>
 
@@ -1405,11 +1525,49 @@
 
     function saveNote() { autoSave(); toast('Saved'); }
 
-    function deleteNote() {
-      if (!selectedNote) return;
-      notes = notes.filter(n => n.id !== selectedNote.id);
-      links = links.filter(l => l.from !== selectedNote.id && l.to !== selectedNote.id);
-      saveAll(); closePanel(); markDirty(); toast('Note deleted');
+    let skipDeleteConfirm = localStorage.getItem('garden_skip_delete') === 'true';
+    let pendingDelete = false;
+
+    function deleteNote(note) {
+      const target = note || selectedNote;
+      if (!target) return;
+      if (skipDeleteConfirm) {
+        doDelete(target); return;
+      }
+      // Show modal
+      pendingDelete = target;
+      document.getElementById('modalNoteName').textContent = target.title || 'Untitled';
+      const cb = document.getElementById('modalCheckbox');
+      cb.classList.toggle('checked', skipDeleteConfirm);
+      document.getElementById('deleteModal').classList.add('open');
+    }
+
+    function confirmDelete() {
+      if (pendingDelete) doDelete(pendingDelete);
+      closeDeleteModal();
+    }
+
+    function cancelDelete() {
+      pendingDelete = false;
+      closeDeleteModal();
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').classList.remove('open');
+      pendingDelete = false;
+    }
+
+    function toggleSkipConfirm() {
+      skipDeleteConfirm = !skipDeleteConfirm;
+      localStorage.setItem('garden_skip_delete', String(skipDeleteConfirm));
+      document.getElementById('modalCheckbox').classList.toggle('checked', skipDeleteConfirm);
+    }
+
+    function doDelete(note) {
+      notes = notes.filter(n => n.id !== note.id);
+      links = links.filter(l => l.from !== note.id && l.to !== note.id);
+      if (selectedNote?.id === note.id) closePanel();
+      saveAll(); markDirty(); toast('Note deleted');
     }
 
     function newNote() {
@@ -1434,6 +1592,22 @@
       if (!e.target.closest('.garden-switcher') && !e.target.closest('.garden-popup'))
         document.getElementById('gardenPopup').classList.remove('open');
       if (!e.target.closest('.link-search-wrap')) closeLinkResults();
+      // Close delete modal on backdrop click
+      if (e.target.id === 'deleteModal') cancelDelete();
+    });
+
+    document.addEventListener('keydown', e => {
+      // Backspace on a selected note (not while typing in an input/textarea)
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        const tag = document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        if (selectedNote) { e.preventDefault(); deleteNote(selectedNote); }
+      }
+      // Escape closes modal or panel
+      if (e.key === 'Escape') {
+        if (document.getElementById('deleteModal').classList.contains('open')) { cancelDelete(); return; }
+        closePanel();
+      }
     });
 
     window.addEventListener('resize', resizeCanvas);
