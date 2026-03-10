@@ -30,7 +30,7 @@
       --green: #4ec994;
       --yellow: #c9a96e;
       --red: #e0786a;
-      --icon-sz: 1.0rem;
+      --icon-sz: 0.75rem;
     }
 
     html.light {
@@ -421,16 +421,56 @@
 
     .panel-body {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .panel-scroll {
+      flex: 1;
       overflow-y: auto;
-      padding: 16px 20px;
+      padding: 16px 20px 12px;
       min-height: 0;
     }
 
-    .panel-body::-webkit-scrollbar {
+    .panel-scroll::-webkit-scrollbar {
       width: 3px;
     }
 
-    .panel-body::-webkit-scrollbar-thumb {
+    .panel-scroll::-webkit-scrollbar-thumb {
+      background: var(--border);
+    }
+
+    .panel-connections {
+      flex-shrink: 0;
+      padding: 10px 20px 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 280px;
+    }
+
+    .panel-connections .sec-label {
+      margin-bottom: 6px;
+    }
+
+    .panel-connections .link-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 6px;
+      margin-bottom: 0;
+      min-height: 0;
+    }
+
+    .panel-connections .link-list::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .panel-connections .link-list::-webkit-scrollbar-thumb {
       background: var(--border);
     }
 
@@ -565,6 +605,34 @@
       border-color: var(--ink);
     }
 
+    /* PANEL RESIZE HANDLE */
+    .panel-resize {
+      position: absolute;
+      top: 0;
+      left: -4px;
+      bottom: 0;
+      width: 8px;
+      cursor: col-resize;
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .panel-resize::after {
+      content: '';
+      width: 2px;
+      height: 40px;
+      background: var(--border);
+      border-radius: 2px;
+      transition: background 0.2s;
+    }
+
+    .panel-resize:hover::after,
+    .panel-resize.dragging::after {
+      background: var(--cyan);
+    }
+
     /* CONTENT */
     #noteContent {
       width: 100%;
@@ -585,6 +653,197 @@
     #noteContent::placeholder {
       color: var(--ink-dim);
       font-style: italic;
+    }
+
+    /* MARKDOWN PREVIEW */
+    .md-preview {
+      width: 100%;
+      min-height: 100px;
+      margin-bottom: 12px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--ink-mid);
+      line-height: 1.8;
+      display: none;
+      cursor: text;
+    }
+
+    .md-preview.active {
+      display: block;
+    }
+
+    .md-preview h1,
+    .md-preview h2,
+    .md-preview h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      color: var(--ink);
+      margin: 0.8em 0 0.3em;
+      letter-spacing: -0.01em;
+    }
+
+    .md-preview h1 {
+      font-size: 1.6rem;
+    }
+
+    .md-preview h2 {
+      font-size: 1.3rem;
+    }
+
+    .md-preview h3 {
+      font-size: 1.1rem;
+    }
+
+    .md-preview p {
+      margin: 0 0 0.7em;
+    }
+
+    .md-preview p:last-child {
+      margin-bottom: 0;
+    }
+
+    .md-preview strong {
+      color: var(--ink);
+      font-weight: 400;
+    }
+
+    .md-preview em {
+      font-style: italic;
+    }
+
+    .md-preview code {
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.78em;
+      background: var(--lift);
+      color: var(--cyan);
+      padding: 1px 5px;
+      border-radius: 2px;
+    }
+
+    .md-preview pre {
+      background: var(--lift);
+      padding: 10px 14px;
+      margin: 0.6em 0;
+      overflow-x: auto;
+      border-left: 2px solid var(--cyan);
+    }
+
+    .md-preview pre code {
+      background: none;
+      padding: 0;
+      color: var(--ink-mid);
+      font-size: 0.82em;
+    }
+
+    .md-preview ul,
+    .md-preview ol {
+      padding-left: 1.4em;
+      margin: 0.4em 0 0.7em;
+    }
+
+    .md-preview li {
+      margin-bottom: 0.2em;
+    }
+
+    .md-preview blockquote {
+      border-left: 2px solid var(--purple);
+      margin: 0.6em 0;
+      padding: 2px 0 2px 14px;
+      color: var(--ink-dim);
+      font-style: italic;
+    }
+
+    .md-preview hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0.8em 0;
+    }
+
+    .md-preview a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+
+    .md-preview a:hover {
+      text-decoration: underline;
+    }
+
+    .md-preview img {
+      max-width: 100%;
+      height: auto;
+      margin: 0.4em 0;
+    }
+
+    .md-preview del {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+
+    .md-preview table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.6em 0;
+      font-size: 0.92rem;
+    }
+
+    .md-preview th,
+    .md-preview td {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .md-preview th {
+      background: var(--lift);
+      color: var(--ink);
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      font-weight: 400;
+      text-transform: uppercase;
+    }
+
+    .md-preview td {
+      color: var(--ink-mid);
+    }
+
+    .md-preview tr:nth-child(even) td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* EDIT/PREVIEW TOGGLE */
+    .content-mode-toggle {
+      display: flex;
+      gap: 0;
+      margin-left: auto;
+    }
+
+    .mode-btn {
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.44rem;
+      letter-spacing: 0.1em;
+      padding: 1px 7px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--ink-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-transform: uppercase;
+    }
+
+    .mode-btn:first-child {
+      border-right: none;
+    }
+
+    .mode-btn.active {
+      background: var(--lift);
+      color: var(--ink);
+      border-color: var(--ink-dim);
+    }
+
+    .mode-btn:hover:not(.active) {
+      color: var(--ink);
     }
 
     /* CONNECTIONS */
@@ -666,13 +925,14 @@
 
     .link-results {
       position: absolute;
-      top: 100%;
+      bottom: 100%;
       left: 0;
       right: 0;
       z-index: 200;
       background: var(--lift);
       border: 1px solid var(--purple);
-      border-top: none;
+      border-bottom: none;
+      border-top: 1px solid var(--purple);
       max-height: 180px;
       overflow-y: auto;
       display: none;
@@ -1018,6 +1278,7 @@
     <canvas id="graphCanvas"></canvas>
 
     <div class="note-panel" id="notePanel">
+      <div class="panel-resize" id="panelResize"></div>
       <div class="panel-header">
         <div class="panel-title-row">
           <span class="panel-id" id="panelNoteId"></span>
@@ -1026,27 +1287,37 @@
         <textarea id="noteTitle" rows="1" placeholder="Note title…" oninput="autoResize(this);autoSave()"></textarea>
       </div>
       <div class="panel-body">
-        <div class="sec-label">Tags</div>
-        <div class="panel-meta" id="panelMeta"></div>
-        <div class="new-tag-form" id="newTagForm">
-          <div class="new-tag-row">
-            <input class="new-tag-input" id="newTagName" placeholder="tag name…" maxlength="20"
-              onkeydown="if(event.key==='Enter')createTag()">
-            <button class="tb-btn" onclick="createTag()" style="padding:4px 8px">Add</button>
-            <button class="tb-btn" onclick="closeNewTagForm()" style="padding:4px 6px">✕</button>
+        <div class="panel-scroll">
+          <div class="sec-label">Tags</div>
+          <div class="panel-meta" id="panelMeta"></div>
+          <div class="new-tag-form" id="newTagForm">
+            <div class="new-tag-row">
+              <input class="new-tag-input" id="newTagName" placeholder="tag name…" maxlength="20"
+                onkeydown="if(event.key==='Enter')createTag()">
+              <button class="tb-btn" onclick="createTag()" style="padding:4px 8px">Add</button>
+              <button class="tb-btn" onclick="closeNewTagForm()" style="padding:4px 6px">✕</button>
+            </div>
+            <div class="color-swatches" id="colorSwatches"></div>
           </div>
-          <div class="color-swatches" id="colorSwatches"></div>
+
+          <div class="sec-label" style="margin-top:8px">Content
+            <div class="content-mode-toggle">
+              <button class="mode-btn active" id="modeEdit" onclick="setContentMode('edit')">Edit</button>
+              <button class="mode-btn" id="modePreview" onclick="setContentMode('preview')">Preview</button>
+            </div>
+          </div>
+          <textarea id="noteContent" rows="5" placeholder="Write anything…" oninput="autoSave()"></textarea>
+          <div class="md-preview" id="mdPreview"></div>
         </div>
 
-        <div class="sec-label" style="margin-top:8px">Content</div>
-        <textarea id="noteContent" rows="5" placeholder="Write anything…" oninput="autoSave()"></textarea>
-
-        <div class="sec-label">Connections</div>
-        <div class="link-list" id="linkList"></div>
-        <div class="link-search-wrap">
-          <input class="link-search" id="linkSearch" type="text" placeholder="Search to connect a note…"
-            autocomplete="off" oninput="onLinkSearch()" onfocus="onLinkSearch()">
-          <div class="link-results" id="linkResults"></div>
+        <div class="panel-connections">
+          <div class="sec-label">Connections</div>
+          <div class="link-list" id="linkList"></div>
+          <div class="link-search-wrap">
+            <input class="link-search" id="linkSearch" type="text" placeholder="Search to connect a note…"
+              autocomplete="off" oninput="onLinkSearch()" onfocus="onLinkSearch()">
+            <div class="link-results" id="linkResults"></div>
+          </div>
         </div>
       </div>
       <div class="panel-footer">
@@ -1603,6 +1874,8 @@
       renderLinkList(note);
       const ls = document.getElementById('linkSearch');
       if (ls) { ls.value = ''; closeLinkResults(); }
+      // Open in preview if note has content, edit if blank so user can start typing
+      setContentMode(note.content && note.content.trim() ? 'preview' : 'edit');
     }
 
     function closePanel() {
@@ -1726,6 +1999,291 @@
     }
 
     function resetView() { vpX = 0; vpY = 0; vpScale = 1; markDirty(); }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  MARKDOWN
+    // ═══════════════════════════════════════════════════════════════════
+    function renderMarkdown(src) {
+      if (!src) return '<span style="font-style:italic;color:var(--ink-dim)">Nothing here yet\u2026</span>';
+
+      function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+      // ── inline spans (applied inside block content) ─────────────────
+      function inline(s) {
+        return s
+          // images before links
+          .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%">')
+          // links
+          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+          // bold+italic
+          .replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>')
+          .replace(/___([^_]+)___/g, '<strong><em>$1</em></strong>')
+          // bold
+          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+          .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+          // italic
+          .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+          .replace(/_([^_\n]+)_/g, '<em>$1</em>')
+          // strikethrough
+          .replace(/~~([^~]+)~~/g, '<del>$1</del>')
+          // inline code (already escaped)
+          .replace(/`([^`]+)`/g, '<code>$1</code>');
+      }
+
+      const lines = src.split('\n');
+      const out = [];
+      let i = 0;
+      let inPara = false;
+      let inUl = false;   // unordered list depth
+      let inOl = false;
+      let inBq = false;
+      let inTable = false;
+
+      function closePara() { if (inPara) { out.push('</p>'); inPara = false; } }
+      function closeUl() { if (inUl) { out.push('</ul>'); inUl = false; } }
+      function closeOl() { if (inOl) { out.push('</ol>'); inOl = false; } }
+      function closeBq() { if (inBq) { out.push('</blockquote>'); inBq = false; } }
+      function closeTable() { if (inTable) { out.push('</tbody></table>'); inTable = false; } }
+      function closeAll() { closePara(); closeUl(); closeOl(); closeBq(); closeTable(); }
+
+      while (i < lines.length) {
+        const raw = lines[i];
+        const line = raw;
+        const trimmed = line.trim();
+
+        // ── fenced code block ────────────────────────────────────────
+        const fenceMatch = trimmed.match(/^```(\w*)$/);
+        if (fenceMatch) {
+          closeAll();
+          const lang = fenceMatch[1] || '';
+          const codeLines = [];
+          i++;
+          while (i < lines.length && lines[i].trim() !== '```') {
+            codeLines.push(esc(lines[i]));
+            i++;
+          }
+          const langAttr = lang ? ` class="language-${lang}"` : '';
+          out.push(`<pre><code${langAttr}>${codeLines.join('\n')}</code></pre>`);
+          i++;
+          continue;
+        }
+
+        // ── blank line ───────────────────────────────────────────────
+        if (!trimmed) {
+          closeAll();
+          i++; continue;
+        }
+
+        // ── ATX headings ────────────────────────────────────────────
+        const hMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+        if (hMatch) {
+          closeAll();
+          const level = hMatch[1].length;
+          out.push(`<h${level}>${inline(esc(hMatch[2]))}</h${level}>`);
+          i++; continue;
+        }
+
+        // ── setext headings ─────────────────────────────────────────
+        if (i + 1 < lines.length) {
+          const next = lines[i + 1].trim();
+          if (/^=+$/.test(next) && trimmed) {
+            closeAll();
+            out.push(`<h1>${inline(esc(trimmed))}</h1>`);
+            i += 2; continue;
+          }
+          if (/^-+$/.test(next) && trimmed && next.length >= 2) {
+            closeAll();
+            out.push(`<h2>${inline(esc(trimmed))}</h2>`);
+            i += 2; continue;
+          }
+        }
+
+        // ── HR ───────────────────────────────────────────────────────
+        if (/^(\*{3,}|-{3,}|_{3,})$/.test(trimmed)) {
+          closeAll();
+          out.push('<hr>');
+          i++; continue;
+        }
+
+        // ── blockquote ───────────────────────────────────────────────
+        const bqMatch = trimmed.match(/^>\s?(.*)$/);
+        if (bqMatch) {
+          closeUl(); closeOl(); closePara(); closeTable();
+          if (!inBq) { out.push('<blockquote>'); inBq = true; }
+          out.push(`<p>${inline(esc(bqMatch[1]))}</p>`);
+          i++; continue;
+        } else if (inBq) {
+          closeBq();
+        }
+
+        // ── table ────────────────────────────────────────────────────
+        if (trimmed.includes('|') && i + 1 < lines.length && /^\|?[\s\-:|]+\|/.test(lines[i + 1])) {
+          closeAll();
+          // header row
+          const headers = trimmed.replace(/^\||\|$/g, '').split('|').map(c => `<th>${inline(esc(c.trim()))}</th>`).join('');
+          // alignment row — skip it
+          i += 2;
+          out.push(`<table><thead><tr>${headers}</tr></thead><tbody>`);
+          inTable = true;
+          // body rows
+          while (i < lines.length && lines[i].trim().includes('|') && lines[i].trim() !== '') {
+            const cells = lines[i].trim().replace(/^\||\|$/g, '').split('|').map(c => `<td>${inline(esc(c.trim()))}</td>`).join('');
+            out.push(`<tr>${cells}</tr>`);
+            i++;
+          }
+          closeTable();
+          continue;
+        }
+
+        // ── unordered list ───────────────────────────────────────────
+        const ulMatch = trimmed.match(/^[-*+]\s+(.+)$/);
+        if (ulMatch) {
+          closePara(); closeBq(); closeOl(); closeTable();
+          if (!inUl) { out.push('<ul>'); inUl = true; }
+          out.push(`<li>${inline(esc(ulMatch[1]))}</li>`);
+          i++; continue;
+        } else if (inUl) {
+          closeUl();
+        }
+
+        // ── ordered list ─────────────────────────────────────────────
+        const olMatch = trimmed.match(/^\d+[.)]\s+(.+)$/);
+        if (olMatch) {
+          closePara(); closeBq(); closeUl(); closeTable();
+          if (!inOl) { out.push('<ol>'); inOl = true; }
+          out.push(`<li>${inline(esc(olMatch[1]))}</li>`);
+          i++; continue;
+        } else if (inOl) {
+          closeOl();
+        }
+
+        // ── paragraph ────────────────────────────────────────────────
+        if (!inPara) { out.push('<p>'); inPara = true; }
+        else out.push('<br>');
+        out.push(inline(esc(trimmed)));
+        i++;
+      }
+
+      closeAll();
+      return out.join('');
+    }
+
+    let contentMode = 'edit';
+
+    function setContentMode(mode, clientX, clientY) {
+      contentMode = mode;
+      const ta = document.getElementById('noteContent');
+      const preview = document.getElementById('mdPreview');
+      const btnEdit = document.getElementById('modeEdit');
+      const btnPrev = document.getElementById('modePreview');
+      if (mode === 'preview') {
+        preview.innerHTML = renderMarkdown(ta.value);
+        preview.classList.add('active');
+        ta.style.display = 'none';
+        btnEdit.classList.remove('active');
+        btnPrev.classList.add('active');
+      } else {
+        preview.classList.remove('active');
+        ta.style.display = '';
+        btnEdit.classList.add('active');
+        btnPrev.classList.remove('active');
+        // Place cursor at the character position corresponding to where the user clicked
+        if (clientX !== undefined && clientY !== undefined) {
+          // Map the click point in the preview back to a character offset in the textarea
+          const charPos = previewPointToTextOffset(clientX, clientY, ta.value);
+          ta.focus();
+          ta.setSelectionRange(charPos, charPos);
+        } else {
+          ta.focus();
+        }
+      }
+    }
+
+    // Given a click point in the rendered preview, find the closest character
+    // offset in the raw markdown source and return it.
+    function previewPointToTextOffset(cx, cy, src) {
+      // Use caretRangeFromPoint / caretPositionFromPoint to get the DOM text offset
+      let domOffset = 0;
+      let domNode = null;
+
+      if (document.caretRangeFromPoint) {
+        const range = document.caretRangeFromPoint(cx, cy);
+        if (range) { domNode = range.startContainer; domOffset = range.startOffset; }
+      } else if (document.caretPositionFromPoint) {
+        const pos = document.caretPositionFromPoint(cx, cy);
+        if (pos) { domNode = pos.offsetNode; domOffset = pos.offset; }
+      }
+
+      if (!domNode) return src.length;
+
+      // Walk the text nodes in the preview to find how many rendered characters
+      // precede our target node, then add the offset within that node.
+      const preview = document.getElementById('mdPreview');
+      const walker = document.createTreeWalker(preview, NodeFilter.SHOW_TEXT);
+      let renderedBefore = 0;
+      let node;
+      while ((node = walker.nextNode())) {
+        if (node === domNode) {
+          renderedBefore += domOffset;
+          break;
+        }
+        renderedBefore += node.textContent.length;
+      }
+
+      // Now map renderedBefore (index into stripped preview text) back to src offset.
+      // Strip markdown syntax to get approximate plain text, then find closest match.
+      // Simple heuristic: scan src, counting non-syntax characters until we hit renderedBefore.
+      let srcIdx = 0, plainCount = 0;
+      while (srcIdx < src.length && plainCount < renderedBefore) {
+        const ch = src[srcIdx];
+        // Skip common markdown syntax characters that don't appear in preview text
+        if (ch === '*' || ch === '_' || ch === '`' || ch === '#' || ch === '~') {
+          srcIdx++;
+        } else {
+          plainCount++;
+          srcIdx++;
+        }
+      }
+      return Math.min(srcIdx, src.length);
+    }
+
+    // Wire preview click: switch to edit and place cursor
+    document.getElementById('mdPreview').addEventListener('click', function (e) {
+      setContentMode('edit', e.clientX, e.clientY);
+    });
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  PANEL RESIZE
+    // ═══════════════════════════════════════════════════════════════════
+    (function () {
+      const handle = document.getElementById('panelResize');
+      const panel = document.getElementById('notePanel');
+      let resizing = false, startX = 0, startW = 0;
+
+      handle.addEventListener('mousedown', e => {
+        resizing = true; startX = e.clientX;
+        startW = panel.offsetWidth;
+        handle.classList.add('dragging');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', e => {
+        if (!resizing) return;
+        const delta = startX - e.clientX;
+        const newW = Math.max(280, Math.min(700, startW + delta));
+        panel.style.width = newW + 'px';
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (!resizing) return;
+        resizing = false;
+        handle.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      });
+    })();
 
     function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 
