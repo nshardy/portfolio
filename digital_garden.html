@@ -32,6 +32,44 @@
       --red: #e0786a;
     }
 
+    html.light {
+      --bg: #f4f2ee;
+      --surface: #eceae4;
+      --lift: #e2dfd8;
+      --border: rgba(0, 0, 0, 0.09);
+      --ink: #1c1a26;
+      --ink-mid: #5a5670;
+      --ink-dim: #a09cba;
+      --cyan: #007a7a;
+      --purple: #6b5fbf;
+      --green: #2e8f5e;
+      --yellow: #a07830;
+      --red: #c0503e;
+    }
+
+    /* THEME TOGGLE */
+    .theme-btn {
+      font-family: 'Martian Mono', monospace;
+      font-size: 0.68rem;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--ink-mid);
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+    }
+
+    .theme-btn:hover {
+      color: var(--cyan);
+      border-color: var(--cyan);
+    }
+
     html,
     body {
       height: 100%;
@@ -200,6 +238,36 @@
     .garden-item-del:hover {
       color: var(--red) !important;
       opacity: 1 !important;
+    }
+
+    .garden-item-ren {
+      font-size: 0.7rem;
+      color: var(--ink-dim);
+      opacity: 0;
+      transition: opacity 0.15s;
+      margin-right: 2px;
+    }
+
+    .garden-item:hover .garden-item-ren {
+      opacity: 0.5;
+    }
+
+    .garden-item-ren:hover {
+      color: var(--cyan) !important;
+      opacity: 1 !important;
+    }
+
+    /* Inline rename input */
+    .garden-rename-input {
+      flex: 1;
+      background: var(--bg);
+      border: none;
+      border-bottom: 1px solid var(--cyan);
+      color: var(--ink);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+      padding: 1px 4px;
+      outline: none;
     }
 
     .garden-popup-footer {
@@ -934,6 +1002,7 @@
     <div class="topbar-right">
       <input type="text" id="searchInput" placeholder="search notes…">
       <button class="tb-btn" onclick="resetView()">Reset View</button>
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">☽</button>
       <button class="tb-btn primary" onclick="newNote()">+ New Note</button>
     </div>
   </div>
@@ -997,6 +1066,21 @@
         <span class="legend-toggle" id="legendToggle">▴</span>
       </div>
       <div class="legend-body" id="legendBody"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="gardenDeleteModal">
+    <div class="modal">
+      <div class="modal-title">Delete garden?</div>
+      <div class="modal-sub">
+        <span class="modal-note-name" id="gardenModalName"></span><br>
+        All notes inside will be permanently lost.
+      </div>
+      <div class="modal-actions">
+        <button class="tb-btn" onclick="cancelGardenDelete()">Cancel</button>
+        <button class="tb-btn" style="border-color:var(--red);color:var(--red)"
+          onclick="confirmGardenDelete()">Delete</button>
+      </div>
     </div>
   </div>
 
@@ -1154,12 +1238,42 @@
     function renderGardenList() {
       document.getElementById('gardenList').innerHTML = gardenIds.map(id => {
         const g = gardens[id], count = (g.notes || []).length;
-        return `<div class="garden-item ${id === currentGardenId ? 'active' : ''}" onclick="switchGarden('${id}')">
+        return `<div class="garden-item ${id === currentGardenId ? 'active' : ''}" data-garden-id="${id}" onclick="switchGarden('${id}')">
       <span class="garden-item-name">${g.name}</span>
       <span class="garden-item-count">${count} note${count !== 1 ? 's' : ''}</span>
-      ${gardenIds.length > 1 ? `<span class="garden-item-del" onclick="event.stopPropagation();deleteGarden('${id}')">×</span>` : ''}
+      <span class="garden-item-ren" title="Rename" onclick="event.stopPropagation();startRenameGarden('${id}')">✎</span>
+      ${gardenIds.length > 1 ? `<span class="garden-item-del" title="Delete" onclick="event.stopPropagation();deleteGarden('${id}')">×</span>` : ''}
     </div>`;
       }).join('');
+    }
+
+    function startRenameGarden(id) {
+      const item = document.querySelector(`.garden-item[data-garden-id="${id}"]`);
+      if (!item) return;
+      const nameSpan = item.querySelector('.garden-item-name');
+      const current = gardens[id].name;
+      const inp = document.createElement('input');
+      inp.className = 'garden-rename-input';
+      inp.value = current;
+      nameSpan.replaceWith(inp);
+      inp.focus(); inp.select();
+      // Hide action buttons while renaming
+      item.querySelectorAll('.garden-item-ren,.garden-item-del,.garden-item-count').forEach(el => el.style.visibility = 'hidden');
+      item.onclick = null;
+
+      function commit() {
+        const val = inp.value.trim();
+        if (val) { gardens[id].name = val; saveAll(); }
+        if (currentGardenId === id) document.getElementById('gardenNameBtn').textContent = gardens[id].name;
+        renderGardenList();
+      }
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
+        if (e.key === 'Escape') { renderGardenList(); }
+        e.stopPropagation();
+      });
+      inp.addEventListener('blur', commit);
+      inp.addEventListener('click', e => e.stopPropagation());
     }
 
     function switchGarden(id) {
@@ -1184,13 +1298,34 @@
       switchGarden(id);
     }
 
+    let pendingGardenDelete = null;
+
     function deleteGarden(id) {
       if (gardenIds.length <= 1) { toast('Cannot delete the last garden'); return; }
-      if (!confirm(`Delete "${gardens[id].name}"? This cannot be undone.`)) return;
+      pendingGardenDelete = id;
+      document.getElementById('gardenModalName').textContent = gardens[id].name;
+      document.getElementById('gardenDeleteModal').classList.add('open');
+    }
+
+    function confirmGardenDelete() {
+      const id = pendingGardenDelete;
+      closeGardenDeleteModal();
+      if (!id) return;
       gardenIds = gardenIds.filter(i => i !== id);
       delete gardens[id];
-      if (currentGardenId === id) activateGarden(gardenIds[0]);
-      else { saveAll(); renderGardenList(); }
+      if (currentGardenId === id) {
+        activateGarden(gardenIds[0]);
+        saveAll();
+      } else {
+        saveAll(); renderGardenList();
+      }
+      toast('Garden deleted');
+    }
+
+    function cancelGardenDelete() { closeGardenDeleteModal(); }
+    function closeGardenDeleteModal() {
+      document.getElementById('gardenDeleteModal').classList.remove('open');
+      pendingGardenDelete = null;
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -1320,7 +1455,8 @@
           const fs = worldToScreen(f.x, f.y), ts = worldToScreen(t.x, t.y);
           const sel = selectedNote && (selectedNote.id === l.from || selectedNote.id === l.to);
           ctx.beginPath(); ctx.moveTo(fs.x, fs.y); ctx.lineTo(ts.x, ts.y);
-          ctx.strokeStyle = sel ? 'rgba(0,170,170,0.4)' : 'rgba(255,255,255,0.07)';
+          const lLight = document.documentElement.classList.contains('light');
+          ctx.strokeStyle = sel ? 'rgba(0,120,120,0.4)' : (lLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)');
           ctx.lineWidth = sel ? 1.5 : 1; ctx.stroke();
         });
 
@@ -1342,7 +1478,10 @@
           ctx.strokeStyle = isSel ? color : color + 'aa';
           ctx.lineWidth = isSel ? 2 : 1; ctx.stroke();
           if (vpScale > 0.4) {
-            ctx.fillStyle = dimmed ? '#4e4a62' : (isSel ? '#dcd8f0' : '#8a859e');
+            const isLight = document.documentElement.classList.contains('light');
+            ctx.fillStyle = dimmed
+              ? (isLight ? '#a09cba' : '#4e4a62')
+              : (isSel ? (isLight ? '#1c1a26' : '#dcd8f0') : (isLight ? '#5a5670' : '#8a859e'));
             const fs2 = Math.max(9, Math.min(13, 11 * vpScale));
             ctx.font = `${fs2}px "Martian Mono",monospace`; ctx.textAlign = 'center';
             const label = n.title.length > 20 ? n.title.slice(0, 18) + '…' : n.title;
@@ -1357,7 +1496,8 @@
 
     function drawMinimap() {
       const W = miniCanvas.width = 140, H = miniCanvas.height = 90;
-      miniCtx.clearRect(0, 0, W, H); miniCtx.fillStyle = '#10101a'; miniCtx.fillRect(0, 0, W, H);
+      const mLight = document.documentElement.classList.contains('light');
+      miniCtx.clearRect(0, 0, W, H); miniCtx.fillStyle = mLight ? '#eceae4' : '#10101a'; miniCtx.fillRect(0, 0, W, H);
       if (!notes.length) return;
       const xs = notes.map(n => n.x), ys = notes.map(n => n.y);
       const minX = Math.min(...xs) - 60, maxX = Math.max(...xs) + 60;
@@ -1368,7 +1508,7 @@
         const f = notes.find(n => n.id === l.from), t = notes.find(n => n.id === l.to);
         if (!f || !t) return;
         miniCtx.beginPath(); miniCtx.moveTo(f.x * sc + ox, f.y * sc + oy); miniCtx.lineTo(t.x * sc + ox, t.y * sc + oy);
-        miniCtx.strokeStyle = 'rgba(255,255,255,0.08)'; miniCtx.lineWidth = 0.5; miniCtx.stroke();
+        miniCtx.strokeStyle = mLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'; miniCtx.lineWidth = 0.5; miniCtx.stroke();
       });
       notes.forEach(n => {
         miniCtx.beginPath(); miniCtx.arc(n.x * sc + ox, n.y * sc + oy, 3, 0, Math.PI * 2);
@@ -1608,6 +1748,37 @@
         if (document.getElementById('deleteModal').classList.contains('open')) { cancelDelete(); return; }
         closePanel();
       }
+    });
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  THEME
+    // ═══════════════════════════════════════════════════════════════════
+    let currentTheme = localStorage.getItem('garden_theme') || 'dark';
+
+    function applyTheme(theme) {
+      currentTheme = theme;
+      if (theme === 'light') {
+        document.documentElement.classList.add('light');
+        document.getElementById('themeBtn').textContent = '○';
+        document.getElementById('themeBtn').title = 'Switch to dark';
+      } else {
+        document.documentElement.classList.remove('light');
+        document.getElementById('themeBtn').textContent = '☽';
+        document.getElementById('themeBtn').title = 'Switch to light';
+      }
+      localStorage.setItem('garden_theme', theme);
+      markDirty();
+    }
+
+    function toggleTheme() {
+      applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    }
+
+    applyTheme(currentTheme);
+
+    // ── close garden delete modal on backdrop click ──────────────────
+    document.getElementById('gardenDeleteModal').addEventListener('click', e => {
+      if (e.target.id === 'gardenDeleteModal') cancelGardenDelete();
     });
 
     window.addEventListener('resize', resizeCanvas);
