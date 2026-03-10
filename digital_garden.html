@@ -1303,6 +1303,18 @@
       }
     });
 
+    canvas.addEventListener('dblclick', e => {
+      const { x: cx, y: cy } = canvasXY(e);
+      // Only create if not double-clicking an existing node
+      if (noteAt(cx, cy)) return;
+      const w = screenToWorld(cx, cy);
+      const note = { id: nextId++, title: '', content: '', tags: [], x: w.x, y: w.y };
+      notes.push(note); saveAll(); openNote(note);
+      const titleEl = document.getElementById('noteTitle');
+      titleEl.focus();
+      titleEl.select();
+    });
+
     canvas.addEventListener('wheel', e => {
       e.preventDefault();
       vpScale = Math.max(0.2, Math.min(3, vpScale * (e.deltaY > 0 ? 0.9 : 1.1))); markDirty();
