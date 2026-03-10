@@ -1412,10 +1412,12 @@
     //  COORDINATE HELPERS
     // ═══════════════════════════════════════════════════════════════════
     function worldToScreen(x, y) {
-      return { x: (x + vpX) * vpScale + canvas.width / 2, y: (y + vpY) * vpScale + canvas.height / 2 };
+      const dpr = window.devicePixelRatio || 1;
+      return { x: (x + vpX) * vpScale + canvas.width / 2 / dpr, y: (y + vpY) * vpScale + canvas.height / 2 / dpr };
     }
     function screenToWorld(x, y) {
-      return { x: (x - canvas.width / 2) / vpScale - vpX, y: (y - canvas.height / 2) / vpScale - vpY };
+      const dpr2 = window.devicePixelRatio || 1;
+      return { x: (x - canvas.width / 2 / dpr2) / vpScale - vpX, y: (y - canvas.height / 2 / dpr2) / vpScale - vpY };
     }
     function nodeRadius(note) {
       return 10 + links.filter(l => l.from === note.id || l.to === note.id).length * 3;
@@ -1437,7 +1439,13 @@
     // ═══════════════════════════════════════════════════════════════════
     function resizeCanvas() {
       const r = canvas.parentElement.getBoundingClientRect();
-      canvas.width = r.width; canvas.height = r.height; markDirty();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = r.width * dpr;
+      canvas.height = r.height * dpr;
+      canvas.style.width = r.width + 'px';
+      canvas.style.height = r.height + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      markDirty();
     }
 
 
@@ -1446,7 +1454,9 @@
     function draw() {
       if (dirty) {
         dirty = false;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const lw = canvas.width / (window.devicePixelRatio || 1);
+        const lh = canvas.height / (window.devicePixelRatio || 1);
+        ctx.clearRect(0, 0, lw, lh);
         const q = document.getElementById('searchInput').value.toLowerCase();
 
         links.forEach(l => {
@@ -1711,7 +1721,8 @@
     }
 
     function newNote() {
-      const w = screenToWorld(canvas.width / 2 + (Math.random() - 0.5) * 200, canvas.height / 2 + (Math.random() - 0.5) * 200);
+      const _dpr = window.devicePixelRatio || 1;
+      const w = screenToWorld(canvas.width / 2 / _dpr + (Math.random() - 0.5) * 200, canvas.height / 2 / _dpr + (Math.random() - 0.5) * 200);
       const note = { id: nextId++, title: '', content: '', tags: [], x: w.x, y: w.y };
       notes.push(note); saveAll(); openNote(note);
       document.getElementById('noteTitle').focus();
