@@ -161,6 +161,87 @@
       color: var(--ink);
     }
 
+    /* TAG FILTER BAR */
+    .tag-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 0 20px;
+      height: 0;
+      overflow: hidden;
+      background: var(--surface);
+      border-bottom: 0px solid var(--border);
+      transition: height 0.2s, padding 0.2s, border-width 0.2s;
+      flex-shrink: 0;
+    }
+
+    .tag-filter-bar.has-tags {
+      height: 38px;
+      border-bottom-width: 1px;
+    }
+
+    .filter-label {
+      font-size: 0.44rem;
+      letter-spacing: 0.15em;
+      color: var(--ink-dim);
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .filter-tag {
+      font-size: 0.44rem;
+      letter-spacing: 0.1em;
+      padding: 2px 8px;
+      border: 1px solid var(--border);
+      color: var(--ink-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      font-family: 'JetBrains Mono', monospace;
+      background: none;
+    }
+
+    .filter-tag .ftag-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .filter-tag.active {
+      color: var(--ftag-color);
+      border-color: var(--ftag-color);
+      background: transparent;
+    }
+
+    .filter-tag:hover {
+      border-color: var(--ftag-color);
+    }
+
+    .filter-clear {
+      font-size: 0.44rem;
+      letter-spacing: 0.1em;
+      color: var(--ink-dim);
+      cursor: pointer;
+      padding: 2px 6px;
+      border: none;
+      background: none;
+      font-family: 'JetBrains Mono', monospace;
+      transition: color 0.15s;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .filter-clear:hover {
+      color: var(--red);
+    }
+
     /* GARDEN POPUP */
     .garden-popup {
       position: absolute;
@@ -301,6 +382,106 @@
       display: flex;
       gap: 8px;
       align-items: center;
+    }
+
+    .color-mode-wrap {
+      position: relative;
+    }
+
+    .color-mode-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.44rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--ink-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .color-mode-btn:hover {
+      color: var(--ink);
+      border-color: var(--ink-dim);
+    }
+
+    .color-mode-btn .cm-swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: conic-gradient(#00AAAA 0deg 120deg, #8b7fcf 120deg 240deg, #4ec994 240deg 360deg);
+      flex-shrink: 0;
+    }
+
+    .color-mode-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      z-index: 300;
+      background: var(--lift);
+      border: 1px solid var(--border);
+      min-width: 160px;
+      display: none;
+      flex-direction: column;
+    }
+
+    .color-mode-dropdown.open {
+      display: flex;
+    }
+
+    .cm-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.44rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      border: none;
+      background: none;
+      text-align: left;
+      width: 100%;
+    }
+
+    .cm-option:hover {
+      background: var(--surface);
+      color: var(--ink);
+    }
+
+    .cm-option.active {
+      color: var(--cyan);
+    }
+
+    .cm-option .cm-node-preview {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .cm-node-preview.cm-arc {
+      background: conic-gradient(#00AAAA 0deg 120deg, #8b7fcf 120deg 240deg, #e0786a 240deg 360deg);
+    }
+
+    .cm-node-preview.cm-dominant {
+      background: #00AAAA;
+    }
+
+    .cm-node-preview.cm-oklab {
+      background: #6ca4af;
+    }
+
+    .cm-node-preview.cm-rgb {
+      background: #786ca2;
     }
 
     .tb-btn {
@@ -1321,6 +1502,21 @@
       <input type="text" id="searchInput" placeholder="search notes…">
       <button class="tb-btn" onclick="resetView()">Reset View</button>
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">☽</button>
+      <div class="color-mode-wrap" id="colorModeWrap">
+        <button class="color-mode-btn" onclick="toggleColorModeDropdown()">
+          <span class="cm-swatch"></span><span id="colorModeLabel">oklab</span>
+        </button>
+        <div class="color-mode-dropdown" id="colorModeDropdown">
+          <button class="cm-option active" data-mode="arc" onclick="setColorMode('arc')"> <span
+              class="cm-node-preview cm-arc"></span>Arc segs</button>
+          <button class="cm-option" data-mode="dominant" onclick="setColorMode('dominant')"><span
+              class="cm-node-preview cm-dominant"></span>Dominant</button>
+          <button class="cm-option" data-mode="oklab" onclick="setColorMode('oklab')"> <span
+              class="cm-node-preview cm-oklab"></span>Oklab</button>
+          <button class="cm-option" data-mode="rgb" onclick="setColorMode('rgb')"> <span
+              class="cm-node-preview cm-rgb"></span>RGB avg</button>
+        </div>
+      </div>
       <button class="tb-btn primary" onclick="newNote()">+ New Note</button>
     </div>
   </div>
@@ -1333,6 +1529,10 @@
         onkeydown="if(event.key==='Enter')createGarden()">
       <button class="tb-btn" onclick="createGarden()" style="padding:6px 10px">Create</button>
     </div>
+  </div>
+
+  <div class="tag-filter-bar" id="tagFilterBar">
+    <span class="filter-label">Filter</span>
   </div>
 
   <div class="layout">
@@ -1460,6 +1660,7 @@
     let gardens = {}, gardenIds = [], currentGardenId = null;
     let notes = [], links = [], nextId = 1, customTags = [];
     let selectedNote = null, hoveredNote = null;
+    let activeTags = new Set();
     let vpX = 0, vpY = 0, vpScale = 1;
     let isDragging = false, dragStartX = 0, dragStartY = 0, dragVpX = 0, dragVpY = 0;
     let nodeDragging = null, nodeDragOffX = 0, nodeDragOffY = 0;
@@ -1542,9 +1743,11 @@
 
       vpX = 0; vpY = 0; vpScale = 1;
       selectedNote = null; hoveredNote = null;
+      activeTags.clear();
       document.getElementById('gardenNameBtn').textContent = g.name;
       document.getElementById('notePanel').classList.remove('open');
       renderTagsPanel();
+      renderFilterBar();
       renderLegend();
       markDirty();
     }
@@ -1670,9 +1873,111 @@
       return t ? t.color : '#4e4a62';
     }
 
+    // ── Color mode ──────────────────────────────────────────────────────
+    let colorMode = localStorage.getItem('garden_color_mode') || 'arc';
+
+    function hexToRgb(hex) {
+      const h = hex.replace('#', '');
+      return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+    }
+    function rgbToHex(r, g, b) {
+      return '#' + [r, g, b].map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
+    }
+    function rgbToOklab([r, g, b]) {
+      r /= 255; g /= 255; b /= 255;
+      r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+      g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+      b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+      const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+      const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+      const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+      return [0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+      1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+      0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s];
+    }
+    function oklabToRgb([L, a, b]) {
+      const l = L + 0.3963377774 * a + 0.2158037573 * b;
+      const m = L - 0.1055613458 * a - 0.0638541728 * b;
+      const s = L - 0.0894841775 * a - 1.2914855480 * b;
+      const rl = l * l * l, rm = m * m * m, rs = s * s * s;
+      const gm = v => v > 0.0031308 ? 1.055 * Math.pow(v, 1 / 2.4) - 0.055 : 12.92 * v;
+      return [gm(4.0767416621 * rl - 3.3077115913 * rm + 0.2309699292 * rs) * 255,
+      gm(-1.2684380046 * rl + 2.6097574011 * rm - 0.3413193965 * rs) * 255,
+      gm(-0.0041960863 * rl - 0.7034186147 * rm + 1.7076147010 * rs) * 255];
+    }
+    function blendOklab(hexColors) {
+      const labs = hexColors.map(h => rgbToOklab(hexToRgb(h)));
+      const avg = [0, 1, 2].map(i => labs.reduce((s, c) => s + c[i], 0) / labs.length);
+      return rgbToHex(...oklabToRgb(avg));
+    }
+    function blendRgb(hexColors) {
+      const rgbs = hexColors.map(hexToRgb);
+      return rgbToHex(...[0, 1, 2].map(i => rgbs.reduce((s, c) => s + c[i], 0) / rgbs.length));
+    }
     function nodeColor(note) {
       if (!note.tags || !note.tags.length) return '#4e4a62';
-      return tagColor(note.tags[0]);
+      const colors = note.tags.map(tagColor);
+      if (colors.length === 1 || colorMode === 'dominant') return colors[0];
+      if (colorMode === 'rgb') return blendRgb(colors);
+      if (colorMode === 'arc') return colors[0];
+      return blendOklab(colors);
+    }
+    function drawArcNode(ctx, sx, sy, r, colors, isSel) {
+      if (colors.length <= 1) {
+        ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fillStyle = isSel ? colors[0] : colors[0] + '33'; ctx.fill(); return;
+      }
+      const slice = (Math.PI * 2) / colors.length;
+      colors.forEach((c, i) => {
+        ctx.beginPath(); ctx.moveTo(sx, sy);
+        ctx.arc(sx, sy, r, -Math.PI / 2 + i * slice, -Math.PI / 2 + (i + 1) * slice);
+        ctx.closePath(); ctx.fillStyle = isSel ? c : c + '55'; ctx.fill();
+      });
+    }
+    function setColorMode(mode) {
+      colorMode = mode; localStorage.setItem('garden_color_mode', mode);
+      document.querySelectorAll('.cm-option').forEach(el => el.classList.toggle('active', el.dataset.mode === mode));
+      document.getElementById('colorModeLabel').textContent = mode;
+      document.getElementById('colorModeDropdown').classList.remove('open');
+      markDirty();
+    }
+    function toggleColorModeDropdown() {
+      document.getElementById('colorModeDropdown').classList.toggle('open');
+    }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#colorModeWrap'))
+        document.getElementById('colorModeDropdown')?.classList.remove('open');
+    });
+    function initColorMode() {
+      document.querySelectorAll('.cm-option').forEach(el => el.classList.toggle('active', el.dataset.mode === colorMode));
+      document.getElementById('colorModeLabel').textContent = colorMode;
+    }
+
+    function renderFilterBar() {
+      const bar = document.getElementById('tagFilterBar');
+      const tags = allTags();
+      bar.innerHTML = `<span class="filter-label">Filter</span>` +
+        tags.map(t => `
+      <button class="filter-tag ${activeTags.has(t.id) ? 'active' : ''}"
+        style="--ftag-color:${t.color}"
+        onclick="toggleFilterTag('${t.id}')">
+        <span class="ftag-dot" style="background:${t.color}"></span>${t.label}
+      </button>`).join('') +
+        (activeTags.size ? `<button class="filter-clear" onclick="clearTagFilter()">clear ×</button>` : '');
+      bar.classList.toggle('has-tags', tags.length > 0);
+    }
+
+    function toggleFilterTag(id) {
+      if (activeTags.has(id)) activeTags.delete(id);
+      else activeTags.add(id);
+      renderFilterBar();
+      markDirty();
+    }
+
+    function clearTagFilter() {
+      activeTags.clear();
+      renderFilterBar();
+      markDirty();
     }
 
     function renderTagsPanel() {
@@ -1726,6 +2031,7 @@
       customTags.push({ id: name, label: raw || name, color: newTagColor });
       closeNewTagForm();
       renderTagsPanel();
+      renderFilterBar();
       renderLegend();
       if (selectedNote) {
         document.querySelectorAll('.meta-tag').forEach(el =>
@@ -1808,15 +2114,21 @@
           const color = nodeColor(n);
           const isSel = selectedNote?.id === n.id;
           const isHov = hoveredNote?.id === n.id;
-          const dimmed = q && !n.title.toLowerCase().includes(q) && !(n.content || '').toLowerCase().includes(q);
+          const qMatch = !q || n.title.toLowerCase().includes(q) || (n.content || '').toLowerCase().includes(q);
+          const tMatch = !activeTags.size || [...activeTags].every(t => (n.tags || []).includes(t));
+          const dimmed = !qMatch || !tMatch;
           ctx.globalAlpha = dimmed ? 0.15 : 1;
           if (isSel || isHov) {
             const grd = ctx.createRadialGradient(s.x, s.y, r, s.x, s.y, r * 3);
             grd.addColorStop(0, color + '40'); grd.addColorStop(1, 'transparent');
             ctx.beginPath(); ctx.arc(s.x, s.y, r * 3, 0, Math.PI * 2); ctx.fillStyle = grd; ctx.fill();
           }
-          ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
-          ctx.fillStyle = isSel ? color : color + '33'; ctx.fill();
+          if (colorMode === 'arc' && n.tags && n.tags.length > 1) {
+            drawArcNode(ctx, s.x, s.y, r, n.tags.map(tagColor), isSel);
+          } else {
+            ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+            ctx.fillStyle = isSel ? color : color + '33'; ctx.fill();
+          }
           ctx.strokeStyle = isSel ? color : color + 'aa';
           ctx.lineWidth = isSel ? 2 : 1; ctx.stroke();
           if (vpScale > 0.4) {
@@ -2261,6 +2573,7 @@
     }
 
     applyTheme(currentTheme);
+    initColorMode();
 
     // ── close garden delete modal on backdrop click ──────────────────
     document.getElementById('gardenDeleteModal').addEventListener('click', e => {
