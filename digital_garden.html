@@ -1660,6 +1660,8 @@
     let gardens = {}, gardenIds = [], currentGardenId = null;
     let notes = [], links = [], nextId = 1, customTags = [];
     let selectedNote = null, hoveredNote = null;
+    let selectedNotes = new Set();
+    let lastMousedownSelection = new Set();
     let activeTags = new Set();
     let vpX = 0, vpY = 0, vpScale = 1;
     let isDragging = false, dragStartX = 0, dragStartY = 0, dragVpX = 0, dragVpY = 0;
@@ -1743,6 +1745,7 @@
 
       vpX = 0; vpY = 0; vpScale = 1;
       selectedNote = null; hoveredNote = null;
+      selectedNotes.clear();
       activeTags.clear();
       document.getElementById('gardenNameBtn').textContent = g.name;
       document.getElementById('notePanel').classList.remove('open');
@@ -2112,7 +2115,8 @@
           const s = worldToScreen(n.x, n.y);
           const r = nodeRadius(n) * vpScale;
           const color = nodeColor(n);
-          const isSel = selectedNote?.id === n.id;
+          const isSel = selectedNote?.id === n.id || selectedNotes.has(n.id);
+          const isMultiSel = selectedNotes.has(n.id);
           const isHov = hoveredNote?.id === n.id;
           const qMatch = !q || n.title.toLowerCase().includes(q) || (n.content || '').toLowerCase().includes(q);
           const tMatch = !activeTags.size || [...activeTags].every(t => (n.tags || []).includes(t));
@@ -2131,6 +2135,11 @@
           }
           ctx.strokeStyle = isSel ? color : color + 'aa';
           ctx.lineWidth = isSel ? 2 : 1; ctx.stroke();
+          if (isMultiSel) {
+            ctx.beginPath(); ctx.arc(s.x, s.y, r + 4, 0, Math.PI * 2);
+            ctx.strokeStyle = '#ffffff55'; ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+          }
           if (vpScale > 0.4) {
             const isLight = document.documentElement.classList.contains('light');
             ctx.fillStyle = dimmed
@@ -2178,10 +2187,20 @@
       const { x: cx, y: cy } = canvasXY(e);
       const hit = noteAt(cx, cy);
       if (hit) {
+        if (e.metaKey || e.ctrlKey) {
+          if (selectedNotes.has(hit.id)) selectedNotes.delete(hit.id);
+          else selectedNotes.add(hit.id);
+          selectedNote = selectedNotes.size === 1 ? notes.find(n => n.id === [...selectedNotes][0]) : null;
+          markDirty(); return;
+        }
+        selectedNotes.clear();
         nodeDragging = hit; nodeDragMoved = false; nodeDragStartX = cx; nodeDragStartY = cy;
         const s = worldToScreen(hit.x, hit.y); nodeDragOffX = cx - s.x; nodeDragOffY = cy - s.y;
         canvas.classList.add('dragging');
       } else {
+        // Snapshot selection for dblclick before clearing — dblclick fires after mousedown
+        lastMousedownSelection = new Set(selectedNotes);
+        if (!e.metaKey && !e.ctrlKey) selectedNotes.clear();
         isDragging = true; dragStartX = cx; dragStartY = cy; dragVpX = vpX; dragVpY = vpY;
         canvas.classList.add('dragging');
       }
@@ -2207,7 +2226,9 @@
 
     canvas.addEventListener('mouseup', e => {
       if (nodeDragging) {
-        if (!nodeDragMoved) openNote(nodeDragging); else saveAll();
+        if (!nodeDragMoved) {
+          if (selectedNotes.size === 0) openNote(nodeDragging);
+        } else saveAll();
         nodeDragging = null; nodeDragMoved = false; canvas.classList.remove('dragging'); return;
       }
       if (isDragging) {
@@ -2219,14 +2240,20 @@
 
     canvas.addEventListener('dblclick', e => {
       const { x: cx, y: cy } = canvasXY(e);
-      // Only create if not double-clicking an existing node
       if (noteAt(cx, cy)) return;
       const w = screenToWorld(cx, cy);
       const note = { id: nextId++, title: '', content: '', tags: [], x: w.x, y: w.y };
-      notes.push(note); saveAll(); openNote(note);
+      notes.push(note);
+      // Use lastMousedownSelection — selectedNotes was cleared by mousedown before dblclick fired
+      const connectTo = lastMousedownSelection.size ? lastMousedownSelection : selectedNotes;
+      connectTo.forEach(sid => {
+        if (!links.find(l => (l.from === sid && l.to === note.id) || (l.from === note.id && l.to === sid)))
+          links.push({ from: sid, to: note.id });
+      });
+      selectedNotes.clear(); lastMousedownSelection.clear();
+      saveAll(); openNote(note);
       const titleEl = document.getElementById('noteTitle');
-      titleEl.focus();
-      titleEl.select();
+      titleEl.focus(); titleEl.select();
     });
 
     canvas.addEventListener('wheel', e => {
@@ -2339,7 +2366,12 @@
     }
 
     function confirmDelete() {
-      if (pendingDelete) doDelete(pendingDelete);
+      if (pendingDelete?._multi) {
+        pendingDelete.ids.forEach(id => { const n = notes.find(x => x.id === id); if (n) doDelete(n); });
+        selectedNotes.clear();
+      } else if (pendingDelete) {
+        doDelete(pendingDelete);
+      }
       closeDeleteModal();
     }
 
@@ -2364,6 +2396,20 @@
       links = links.filter(l => l.from !== note.id && l.to !== note.id);
       if (selectedNote?.id === note.id) closePanel();
       saveAll(); markDirty(); toast('Note deleted');
+    }
+
+    function deleteMultiSelected() {
+      const ids = [...selectedNotes];
+      if (skipDeleteConfirm) {
+        ids.forEach(id => { const n = notes.find(x => x.id === id); if (n) doDelete(n); });
+        selectedNotes.clear(); markDirty(); return;
+      }
+      pendingDelete = { _multi: true, ids };
+      const count = ids.length;
+      document.getElementById('modalNoteName').textContent =
+        count === 1 ? (notes.find(n => n.id === ids[0])?.title || 'Untitled') : `${count} notes`;
+      document.getElementById('modalCheckbox').classList.toggle('checked', skipDeleteConfirm);
+      document.getElementById('deleteModal').classList.add('open');
     }
 
     function newNote() {
@@ -2539,6 +2585,7 @@
       if (e.key === 'Backspace' || e.key === 'Delete') {
         const tag = document.activeElement.tagName;
         if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        if (selectedNotes.size > 0) { e.preventDefault(); deleteMultiSelected(); return; }
         if (selectedNote) { e.preventDefault(); deleteNote(selectedNote); }
       }
       // Escape closes modal or panel
