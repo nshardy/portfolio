@@ -546,7 +546,7 @@
 
     /* NOTE PANEL */
     .note-panel {
-      position: absolute;
+      position: fixed;
       top: 0;
       right: 0;
       bottom: 0;
@@ -875,6 +875,34 @@
 
     .color-swatch.selected {
       border-color: var(--ink);
+    }
+
+    /* BOX PANEL */
+    .box-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 380px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 50;
+      overflow: hidden;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+    }
+
+    .box-panel.open {
+      transform: translateX(0);
+    }
+
+    .box-color-swatches {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
     }
 
     /* PANEL RESIZE HANDLE */
@@ -1623,7 +1651,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="brand">GARDEN</span>
-      <span class="version-badge">v0.12.0</span>
+      <span class="version-badge">v0.14.1</span>
       <div class="garden-switcher">
         <button class="garden-name-btn" id="gardenNameBtn" onclick="toggleGardenPopup()">Loading…</button>
         <button class="garden-dropdown-btn" onclick="toggleGardenPopup()">▾</button>
@@ -1648,6 +1676,7 @@
               class="cm-node-preview cm-rgb"></span>RGB avg</button>
         </div>
       </div>
+      <button class="tb-btn" onclick="newBox()">+ New Box</button>
       <button class="tb-btn primary" onclick="newNote()">+ New Note</button>
     </div>
   </div>
@@ -1735,6 +1764,7 @@
       </div>
     </div>
 
+
     <div class="minimap"><canvas id="minimapCanvas"></canvas></div>
 
     <div class="legend" id="legend">
@@ -1743,6 +1773,55 @@
         <span class="legend-toggle" id="legendToggle">▴</span>
       </div>
       <div class="legend-body" id="legendBody"></div>
+    </div>
+  </div>
+
+  <!-- BOX PANEL -->
+  <div class="box-panel" id="boxPanel">
+    <div class="panel-resize" id="boxPanelResize"></div>
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <span class="panel-id" id="boxPanelId"></span>
+        <button class="panel-close" onclick="closeBoxPanel()">close ×</button>
+      </div>
+      <input id="boxTitle" type="text" placeholder="Box title…"
+        style="width:100%;background:none;border:none;outline:none;font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:300;color:var(--ink);letter-spacing:-0.01em;padding:0"
+        oninput="autoSaveBox()">
+    </div>
+    <div class="panel-body">
+      <div class="panel-scroll">
+        <div class="sec-label">Position &amp; Size</div>
+        <div class="pos-row">
+          <div class="pos-field"><span class="pos-axis">X</span><input class="pos-input" id="boxPosX" type="number"
+              step="0.01" disabled></div>
+          <div class="pos-field"><span class="pos-axis">Y</span><input class="pos-input" id="boxPosY" type="number"
+              step="0.01" disabled></div>
+          <button class="pos-lock" id="boxPosLock" onclick="toggleBoxPosLock()" title="Unlock to edit">🔒</button>
+        </div>
+        <div class="pos-row" style="margin-top:6px">
+          <div class="pos-field"><span class="pos-axis">W</span><input class="pos-input" id="boxPosW" type="number"
+              step="0.01" disabled></div>
+          <div class="pos-field"><span class="pos-axis">H</span><input class="pos-input" id="boxPosH" type="number"
+              step="0.01" disabled></div>
+          <div style="width:38px"></div>
+        </div>
+        <div class="sec-label" style="margin-top:12px">Color</div>
+        <div class="box-color-swatches" id="boxColorSwatches"></div>
+        <div class="sec-label" style="margin-top:12px">Notes Inside</div>
+        <div id="boxNotesList" style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px"></div>
+      </div>
+      <div class="panel-connections">
+        <div class="sec-label">Connected Sections</div>
+        <div class="link-list" id="boxConnectionsList"></div>
+        <div class="link-search-wrap">
+          <input class="link-search" id="boxLinkSearch" type="text" placeholder="Search to connect a section…"
+            autocomplete="off" oninput="onBoxLinkSearch()" onfocus="onBoxLinkSearch()">
+          <div class="link-results" id="boxLinkResults"></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel-footer">
+      <button class="del-btn" onclick="deleteBox()">Delete box</button>
     </div>
   </div>
 
@@ -1806,13 +1885,20 @@
     //  STATE
     // ═══════════════════════════════════════════════════════════════════
     let gardens = {}, gardenIds = [], currentGardenId = null;
-    let notes = [], links = [], nextId = 1, customTags = [];
+    let notes = [], links = [], nextId = 1, customTags = [], boxes = [], boxLinks = [];
     let selectedNote = null, hoveredNote = null;
     let selectedNotes = new Set();
     let lastMousedownSelection = new Set();
     let activeTags = new Set();
     let vpX = 0, vpY = 0, vpScale = 1;
     let isDragging = false, dragStartX = 0, dragStartY = 0, dragVpX = 0, dragVpY = 0;
+    let selectedBox = null;
+    let boxDragging = null, boxDragMoved = false;
+    let boxDragStartX = 0, boxDragStartY = 0;
+    let boxDragOffX = 0, boxDragOffY = 0;
+    let boxResizeHandle = null; // {box, edge} where edge is "n","s","e","w","nw","ne","sw","se"
+    let boxResizeStartX = 0, boxResizeStartY = 0;
+    let boxResizeOrigX = 0, boxResizeOrigY = 0, boxResizeOrigW = 0, boxResizeOrigH = 0;
     let isBoxSelecting = false, boxSelStartX = 0, boxSelStartY = 0, boxSelCurX = 0, boxSelCurY = 0;
     let nodeDragging = null, nodeDragOffX = 0, nodeDragOffY = 0;
     let nodeDragMoved = false, nodeDragStartX = 0, nodeDragStartY = 0;
@@ -1834,6 +1920,8 @@
         gardens[currentGardenId].links = links;
         gardens[currentGardenId].nextId = nextId;
         gardens[currentGardenId].customTags = customTags;
+        gardens[currentGardenId].boxes = boxes;
+        gardens[currentGardenId].boxLinks = boxLinks;
         gardens[currentGardenId].viewport = { vpX, vpY, vpScale };
       }
       try {
@@ -1892,12 +1980,15 @@
       links = g.links || [];
       nextId = g.nextId || 1;
       customTags = g.customTags || [];
+      boxes = g.boxes || [];
+      boxLinks = g.boxLinks || [];
 
       // Restore saved viewport or fall through to resetView
       const savedVp = gardens[id].viewport;
       if (savedVp) { vpX = savedVp.vpX; vpY = savedVp.vpY; vpScale = savedVp.vpScale; }
       else { vpX = 0; vpY = 0; vpScale = 1; }
       selectedNote = null; hoveredNote = null;
+      selectedBox = null;
       selectedNotes.clear();
       activeTags.clear();
       document.getElementById('gardenNameBtn').textContent = g.name;
@@ -2221,6 +2312,48 @@
       const r = canvas.getBoundingClientRect();
       return { x: e.clientX - r.left, y: e.clientY - r.top };
     }
+    function boxContaining(wx, wy) {
+      for (let i = boxes.length - 1; i >= 0; i--) {
+        const b = boxes[i];
+        if (wx >= b.x && wx <= b.x + b.w && wy >= b.y && wy <= b.y + b.h) return b;
+      }
+      return null;
+    }
+
+    function boxAt(cx, cy) {
+      // Returns {box, edge} if on a resize handle of selected box, else {box} if inside, else null
+      for (let i = boxes.length - 1; i >= 0; i--) {
+        const b = boxes[i];
+        const tl = worldToScreen(b.x, b.y);
+        const br = worldToScreen(b.x + b.w, b.y + b.h);
+        const sw = br.x - tl.x, sh = br.y - tl.y;
+        const mx = tl.x + sw / 2, my = tl.y + sh / 2;
+        const hSz = 8;
+        if (selectedBox?.id === b.id) {
+          const handles = [
+            { x: tl.x, y: tl.y, e: 'nw' }, { x: mx, y: tl.y, e: 'n' }, { x: br.x, y: tl.y, e: 'ne' },
+            { x: tl.x, y: my, e: 'w' }, { x: br.x, y: my, e: 'e' },
+            { x: tl.x, y: br.y, e: 'sw' }, { x: mx, y: br.y, e: 's' }, { x: br.x, y: br.y, e: 'se' }
+          ];
+          for (const h of handles) {
+            if (Math.abs(cx - h.x) < hSz && Math.abs(cy - h.y) < hSz)
+              return { box: b, edge: h.e };
+          }
+        }
+        if (cx >= tl.x && cx <= br.x && cy >= tl.y && cy <= br.y)
+          return { box: b, edge: null };
+      }
+      return null;
+    }
+
+    function boxCursor(edge) {
+      const map = {
+        nw: 'nw-resize', ne: 'ne-resize', sw: 'sw-resize', se: 'se-resize',
+        n: 'n-resize', s: 's-resize', e: 'e-resize', w: 'w-resize'
+      };
+      return map[edge] || 'move';
+    }
+
     function noteAt(cx, cy) {
       for (const n of [...notes].reverse()) {
         const s = worldToScreen(n.x, n.y);
@@ -2253,6 +2386,65 @@
         const lh = canvas.height / (window.devicePixelRatio || 1);
         ctx.clearRect(0, 0, lw, lh);
         const q = document.getElementById('searchInput').value.toLowerCase();
+
+        // ── Box-to-box connections ──────────────────────────────────
+        boxLinks.forEach(l => {
+          const a = boxes.find(b => b.id === l.from), b = boxes.find(b => b.id === l.to);
+          if (!a || !b) return;
+          const ac = worldToScreen(a.x + a.w / 2, a.y + a.h / 2);
+          const bc = worldToScreen(b.x + b.w / 2, b.y + b.h / 2);
+          ctx.beginPath(); ctx.moveTo(ac.x, ac.y); ctx.lineTo(bc.x, bc.y);
+          ctx.strokeStyle = a.color + '88'; ctx.lineWidth = 1.5;
+          ctx.setLineDash([6, 3]); ctx.stroke(); ctx.setLineDash([]);
+        });
+
+        // ── Annotation boxes (drawn behind everything) ────────────
+        boxes.forEach(b => {
+          const tl = worldToScreen(b.x, b.y);
+          const br = worldToScreen(b.x + b.w, b.y + b.h);
+          const sw = br.x - tl.x, sh = br.y - tl.y;
+          const isSel = selectedBox?.id === b.id;
+          const isLight = document.documentElement.classList.contains('light');
+          // Fill
+          ctx.beginPath(); ctx.rect(tl.x, tl.y, sw, sh);
+          ctx.fillStyle = b.color + (isLight ? '18' : '14');
+          ctx.fill();
+          // Border
+          ctx.strokeStyle = b.color + (isSel ? 'cc' : '55');
+          ctx.lineWidth = isSel ? 1.5 : 1;
+          ctx.setLineDash(isSel ? [] : [6, 4]);
+          ctx.stroke(); ctx.setLineDash([]);
+          // Title inline with top border
+          if (b.title && vpScale > 0.3) {
+            const fs = Math.max(9, Math.min(14, 12 * vpScale));
+            ctx.font = `${fs}px "JetBrains Mono",monospace`;
+            ctx.textAlign = 'left';
+            const pad = 8;
+            const tw = ctx.measureText(b.title).width;
+            // White-out background behind text so it sits on the border line
+            ctx.fillStyle = isLight ? 'rgba(248,244,235,0.92)' : 'rgba(11,11,18,0.88)';
+            ctx.fillRect(tl.x + pad - 2, tl.y - fs / 2 - 1, tw + 8, fs + 2);
+            ctx.fillStyle = b.color;
+            ctx.fillText(b.title, tl.x + pad, tl.y + fs * 0.35);
+          }
+          // Resize handles (8 corners + edges) when selected
+          if (isSel) {
+            const hSz = 6;
+            const mx = tl.x + sw / 2, my = tl.y + sh / 2;
+            [
+              { x: tl.x, y: tl.y, e: 'nw' }, { x: mx, y: tl.y, e: 'n' }, { x: br.x, y: tl.y, e: 'ne' },
+              { x: tl.x, y: my, e: 'w' }, { x: br.x, y: my, e: 'e' },
+              { x: tl.x, y: br.y, e: 'sw' }, { x: mx, y: br.y, e: 's' }, { x: br.x, y: br.y, e: 'se' }
+            ].forEach(h => {
+              ctx.beginPath();
+              ctx.rect(h.x - hSz / 2, h.y - hSz / 2, hSz, hSz);
+              ctx.fillStyle = b.color;
+              ctx.strokeStyle = isLight ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)';
+              ctx.lineWidth = 1;
+              ctx.fill(); ctx.stroke();
+            });
+          }
+        });
 
         links.forEach(l => {
           const f = notes.find(n => n.id === l.from), t = notes.find(n => n.id === l.to);
@@ -2353,35 +2545,88 @@
     canvas.addEventListener('mousedown', e => {
       markDirty();
       const { x: cx, y: cy } = canvasXY(e);
-      const hit = noteAt(cx, cy);
-      if (hit) {
+      const noteHit = noteAt(cx, cy);
+      if (noteHit) {
         if (e.metaKey || e.ctrlKey) {
-          if (selectedNotes.has(hit.id)) selectedNotes.delete(hit.id);
-          else selectedNotes.add(hit.id);
+          if (selectedNotes.has(noteHit.id)) selectedNotes.delete(noteHit.id);
+          else selectedNotes.add(noteHit.id);
           selectedNote = selectedNotes.size === 1 ? notes.find(n => n.id === [...selectedNotes][0]) : null;
           markDirty(); return;
         }
         selectedNotes.clear();
-        nodeDragging = hit; nodeDragMoved = false; nodeDragStartX = cx; nodeDragStartY = cy;
-        const s = worldToScreen(hit.x, hit.y); nodeDragOffX = cx - s.x; nodeDragOffY = cy - s.y;
+        nodeDragging = noteHit; nodeDragMoved = false; nodeDragStartX = cx; nodeDragStartY = cy;
+        const s = worldToScreen(noteHit.x, noteHit.y); nodeDragOffX = cx - s.x; nodeDragOffY = cy - s.y;
         canvas.classList.add('dragging');
-      } else {
-        lastMousedownSelection = new Set(selectedNotes);
-        if (e.metaKey || e.ctrlKey) {
-          // Box select mode
-          isBoxSelecting = true; boxSelStartX = cx; boxSelStartY = cy; boxSelCurX = cx; boxSelCurY = cy;
+        return;
+      }
+      const boxHit = boxAt(cx, cy);
+      if (boxHit) {
+        if (boxHit.edge) {
+          // Start resize
+          boxResizeHandle = boxHit;
+          boxResizeStartX = cx; boxResizeStartY = cy;
+          boxResizeOrigX = boxHit.box.x; boxResizeOrigY = boxHit.box.y;
+          boxResizeOrigW = boxHit.box.w; boxResizeOrigH = boxHit.box.h;
           canvas.classList.add('dragging');
         } else {
-          selectedNotes.clear();
-          isDragging = true; dragStartX = cx; dragStartY = cy; dragVpX = vpX; dragVpY = vpY;
+          // Start move
+          boxDragging = boxHit.box; boxDragMoved = false;
+          boxDragStartX = cx; boxDragStartY = cy;
+          const tl = worldToScreen(boxHit.box.x, boxHit.box.y);
+          boxDragOffX = cx - tl.x; boxDragOffY = cy - tl.y;
           canvas.classList.add('dragging');
         }
+        return;
+      }
+      lastMousedownSelection = new Set(selectedNotes);
+      if (e.metaKey || e.ctrlKey) {
+        isBoxSelecting = true; boxSelStartX = cx; boxSelStartY = cy; boxSelCurX = cx; boxSelCurY = cy;
+        canvas.classList.add('dragging');
+      } else {
+        selectedNotes.clear();
+        isDragging = true; dragStartX = cx; dragStartY = cy; dragVpX = vpX; dragVpY = vpY;
+        canvas.classList.add('dragging');
       }
     });
 
     canvas.addEventListener('mousemove', e => {
       markDirty();
       const { x: cx, y: cy } = canvasXY(e);
+      if (boxResizeHandle) {
+        const b = boxResizeHandle.box;
+        const dw = screenToWorld(cx, cy);
+        const d0 = screenToWorld(boxResizeStartX, boxResizeStartY);
+        const dx = dw.x - d0.x, dy = dw.y - d0.y;
+        const edge = boxResizeHandle.edge;
+        if (edge.includes('e')) b.w = Math.max(40, boxResizeOrigW + dx);
+        if (edge.includes('s')) b.h = Math.max(40, boxResizeOrigH + dy);
+        if (edge.includes('w')) { b.x = boxResizeOrigX + dx; b.w = Math.max(40, boxResizeOrigW - dx); }
+        if (edge.includes('n')) { b.y = boxResizeOrigY + dy; b.h = Math.max(40, boxResizeOrigH - dy); }
+        updateBoxPosFields();
+        return;
+      }
+      if (boxDragging) {
+        if (Math.hypot(cx - boxDragStartX, cy - boxDragStartY) > 4) {
+          if (!boxDragMoved) {
+            // Record note offsets relative to box origin on first move
+            boxDragging._noteOffsets = notes
+              .filter(n => n.boxId === boxDragging.id)
+              .map(n => ({ note: n, dx: n.x - boxDragging.x, dy: n.y - boxDragging.y }));
+          }
+          boxDragMoved = true;
+          const w = screenToWorld(cx - boxDragOffX, cy - boxDragOffY);
+          boxDragging.x = w.x; boxDragging.y = w.y;
+          // Move sticky notes with the box
+          if (boxDragging._noteOffsets) {
+            boxDragging._noteOffsets.forEach(({ note, dx, dy }) => {
+              note.x = boxDragging.x + dx;
+              note.y = boxDragging.y + dy;
+            });
+          }
+          updateBoxPosFields();
+        }
+        return;
+      }
       if (nodeDragging) {
         if (Math.hypot(cx - nodeDragStartX, cy - nodeDragStartY) > 5) {
           nodeDragMoved = true;
@@ -2399,14 +2644,36 @@
         saveViewport(); return;
       }
       hoveredNote = noteAt(cx, cy);
-      canvas.style.cursor = (e.metaKey || e.ctrlKey) ? 'crosshair' : (hoveredNote ? 'pointer' : 'grab');
+      if (e.metaKey || e.ctrlKey) { canvas.style.cursor = 'crosshair'; return; }
+      if (hoveredNote) { canvas.style.cursor = 'pointer'; return; }
+      const bh = boxAt(cx, cy);
+      canvas.style.cursor = bh ? boxCursor(bh.edge) : 'grab';
     });
 
     canvas.addEventListener('mouseup', e => {
+      if (boxResizeHandle) {
+        saveAll(); markDirty();
+        boxResizeHandle = null; canvas.classList.remove('dragging'); return;
+      }
+      if (boxDragging) {
+        if (!boxDragMoved) {
+          openBoxPanel(boxDragging);
+        } else {
+          delete boxDragging._noteOffsets;
+          saveAll();
+        }
+        boxDragging = null; boxDragMoved = false; canvas.classList.remove('dragging'); return;
+      }
       if (nodeDragging) {
         if (!nodeDragMoved) {
           if (selectedNotes.size === 0) openNote(nodeDragging);
-        } else saveAll();
+        } else {
+          // Assign note to whatever section it now sits inside
+          const containing = boxContaining(nodeDragging.x, nodeDragging.y);
+          nodeDragging.boxId = containing ? containing.id : null;
+          saveAll();
+          if (selectedBox) { renderBoxNotesList(selectedBox); }
+        }
         nodeDragging = null; nodeDragMoved = false; canvas.classList.remove('dragging'); return;
       }
       if (isBoxSelecting) {
@@ -2422,18 +2689,19 @@
       }
       if (isDragging) {
         const { x: cx, y: cy } = canvasXY(e);
-        if (Math.abs(cx - dragStartX) < 4 && Math.abs(cy - dragStartY) < 4) closePanel();
+        if (Math.abs(cx - dragStartX) < 4 && Math.abs(cy - dragStartY) < 4) closeAllPanels();
         isDragging = false; canvas.classList.remove('dragging');
       }
     });
 
     canvas.addEventListener('dblclick', e => {
       const { x: cx, y: cy } = canvasXY(e);
-      if (noteAt(cx, cy)) return;
+      if (noteAt(cx, cy)) return;  // double-clicking a note does nothing extra
+      if (e.metaKey || e.ctrlKey) return;  // cmd+dblclick reserved for box-select, no note creation
       const w = screenToWorld(cx, cy);
-      const note = { id: nextId++, title: '', content: '', tags: [], x: w.x, y: w.y };
+      const containing = boxContaining(w.x, w.y);
+      const note = { id: nextId++, title: '', content: '', tags: [], x: w.x, y: w.y, boxId: containing?.id || null };
       notes.push(note);
-      // Use lastMousedownSelection — selectedNotes was cleared by mousedown before dblclick fired
       const connectTo = lastMousedownSelection.size ? lastMousedownSelection : selectedNotes;
       connectTo.forEach(sid => {
         if (!links.find(l => (l.from === sid && l.to === note.id) || (l.from === note.id && l.to === sid)))
@@ -2454,6 +2722,9 @@
     //  NOTE PANEL
     // ═══════════════════════════════════════════════════════════════════
     function openNote(note) {
+      // Close box panel if open
+      document.getElementById('boxPanel').classList.remove('open');
+      selectedBox = null;
       selectedNote = note; markDirty();
       document.getElementById('notePanel').classList.add('open');
       document.getElementById('panelNoteId').textContent = `note #${note.id}`;
@@ -2524,6 +2795,12 @@
     function closePanel() {
       document.getElementById('notePanel').classList.remove('open');
       selectedNote = null; markDirty();
+    }
+
+    function closeAllPanels() {
+      document.getElementById('notePanel').classList.remove('open');
+      document.getElementById('boxPanel').classList.remove('open');
+      selectedNote = null; selectedBox = null; markDirty();
     }
 
     function renderLinkList(note) {
@@ -2652,10 +2929,188 @@
       document.getElementById('deleteModal').classList.add('open');
     }
 
+    // ── Box panel ────────────────────────────────────────────────────
+    let boxPosLocked = true;
+
+    function renderBoxColorSwatches(box) {
+      document.getElementById('boxColorSwatches').innerHTML = SWATCH_COLORS.map(col => {
+        const sel = col === box.color;
+        return `<span class="color-swatch ${sel ? 'selected' : ''}" style="background:${col}"
+      onclick="setBoxColor('${col}')"></span>`;
+      }).join('');
+    }
+
+    function setBoxColor(col) {
+      if (!selectedBox) return;
+      selectedBox.color = col;
+      renderBoxColorSwatches(selectedBox);
+      saveAll(); markDirty();
+    }
+
+    function updateBoxPosFields() {
+      if (!selectedBox) return;
+      const px = document.getElementById('boxPosX');
+      const py = document.getElementById('boxPosY');
+      const pw = document.getElementById('boxPosW');
+      const ph = document.getElementById('boxPosH');
+      if (document.activeElement !== px) px.value = parseFloat(selectedBox.x.toFixed(2));
+      if (document.activeElement !== py) py.value = parseFloat(selectedBox.y.toFixed(2));
+      if (document.activeElement !== pw) pw.value = parseFloat(selectedBox.w.toFixed(2));
+      if (document.activeElement !== ph) ph.value = parseFloat(selectedBox.h.toFixed(2));
+    }
+
+    function toggleBoxPosLock() {
+      boxPosLocked = !boxPosLocked;
+      const btn = document.getElementById('boxPosLock');
+      btn.textContent = boxPosLocked ? '🔒' : '🔓';
+      btn.classList.toggle('unlocked', !boxPosLocked);
+      ['boxPosX', 'boxPosY', 'boxPosW', 'boxPosH'].forEach(id =>
+        document.getElementById(id).disabled = boxPosLocked);
+      if (!boxPosLocked) document.getElementById('boxPosX').focus();
+    }
+
+    ['boxPosX', 'boxPosY', 'boxPosW', 'boxPosH'].forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('input', () => {
+        if (!selectedBox || boxPosLocked) return;
+        const v = parseFloat(el.value);
+        if (!isFinite(v)) return;
+        if (id === 'boxPosX') selectedBox.x = v;
+        if (id === 'boxPosY') selectedBox.y = v;
+        if (id === 'boxPosW') selectedBox.w = Math.max(40, v);
+        if (id === 'boxPosH') selectedBox.h = Math.max(40, v);
+        markDirty();
+      });
+      el.addEventListener('blur', () => { if (!boxPosLocked) saveAll(); });
+      el.addEventListener('keydown', e => { if (e.key === 'Enter') el.blur(); });
+    });
+
+    function openBoxPanel(box) {
+      // Close note panel
+      document.getElementById('notePanel').classList.remove('open');
+      selectedNote = null;
+      selectedBox = box;
+      markDirty();
+      document.getElementById('boxPanel').classList.add('open');
+      document.getElementById('boxPanelId').textContent = `box #${box.id}`;
+      document.getElementById('boxTitle').value = box.title || '';
+      boxPosLocked = true;
+      document.getElementById('boxPosLock').textContent = '🔒';
+      document.getElementById('boxPosLock').classList.remove('unlocked');
+      ['boxPosX', 'boxPosY', 'boxPosW', 'boxPosH'].forEach(id =>
+        document.getElementById(id).disabled = true);
+      updateBoxPosFields();
+      renderBoxColorSwatches(box);
+      renderBoxNotesList(box);
+      renderBoxConnections(box);
+    }
+
+    function renderBoxNotesList(box) {
+      const inside = notes.filter(n => n.boxId === box.id);
+      document.getElementById('boxNotesList').innerHTML = inside.length
+        ? inside.map(n => `
+        <div class="link-item" onclick="openNote(notes.find(x=>x.id===${n.id}))">
+          <div class="link-dot" style="background:${nodeColor(n)}"></div>
+          <span>${n.title || 'Untitled'}</span>
+        </div>`).join('')
+        : `<span style="font-size:0.5rem;color:var(--ink-dim);font-family:'JetBrains Mono',monospace">No notes inside</span>`;
+    }
+
+    function renderBoxConnections(box) {
+      const connected = boxLinks
+        .filter(l => l.from === box.id || l.to === box.id)
+        .map(l => boxes.find(b => b.id === (l.from === box.id ? l.to : l.from)))
+        .filter(Boolean);
+      document.getElementById('boxConnectionsList').innerHTML = connected.length
+        ? connected.map(b => `
+        <div class="link-item" onclick="openBoxPanel(boxes.find(x=>x.id===${b.id}))">
+          <div class="link-dot" style="background:${b.color}"></div>
+          <span>${b.title || 'Untitled Section'}</span>
+          <span class="link-remove" onclick="event.stopPropagation();removeBoxLink(${box.id},${b.id})">×</span>
+        </div>`).join('')
+        : `<span style="font-size:0.5rem;color:var(--ink-dim);font-family:'JetBrains Mono',monospace">No connections</span>`;
+    }
+
+    function removeBoxLink(a, b) {
+      boxLinks = boxLinks.filter(l => !((l.from === a && l.to === b) || (l.from === b && l.to === a)));
+      if (selectedBox) renderBoxConnections(selectedBox);
+      saveAll(); markDirty();
+    }
+
+    function addBoxLink(targetId) {
+      if (!selectedBox || targetId === selectedBox.id) return;
+      if (boxLinks.find(l => (l.from === selectedBox.id && l.to === targetId) || (l.from === targetId && l.to === selectedBox.id))) return;
+      boxLinks.push({ from: selectedBox.id, to: targetId });
+      renderBoxConnections(selectedBox);
+      document.getElementById('boxLinkSearch').value = '';
+      closeBoxLinkResults();
+      saveAll(); markDirty();
+    }
+
+    function onBoxLinkSearch() {
+      const q = document.getElementById('boxLinkSearch').value.toLowerCase();
+      const res = document.getElementById('boxLinkResults');
+      if (!q) { res.classList.remove('open'); res.innerHTML = ''; return; }
+      const candidates = boxes.filter(b => b.id !== selectedBox?.id &&
+        (b.title || 'Untitled Section').toLowerCase().includes(q));
+      if (!candidates.length) { res.classList.remove('open'); return; }
+      res.innerHTML = candidates.slice(0, 8).map(b => {
+        const linked = boxLinks.find(l => (l.from === selectedBox.id && l.to === b.id) || (l.from === b.id && l.to === selectedBox.id));
+        return `<div class="link-result-item ${linked ? 'already-linked' : ''}" onmousedown="event.preventDefault();addBoxLink(${b.id})">
+      <div class="link-dot" style="background:${b.color}"></div>
+      <span>${b.title || 'Untitled Section'}</span>
+    </div>`;
+      }).join('');
+      res.classList.add('open');
+    }
+
+    function closeBoxLinkResults() {
+      const r = document.getElementById('boxLinkResults');
+      r.classList.remove('open'); r.innerHTML = '';
+    }
+
+    // Close box link results on outside click
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#boxLinkSearch') && !e.target.closest('#boxLinkResults'))
+        closeBoxLinkResults();
+    });
+
+    function closeBoxPanel() {
+      document.getElementById('boxPanel').classList.remove('open');
+      selectedBox = null; markDirty();
+    }
+
+    function autoSaveBox() {
+      if (!selectedBox) return;
+      selectedBox.title = document.getElementById('boxTitle').value;
+      markDirty(); saveAll();
+    }
+
+    function deleteBox() {
+      if (!selectedBox) return;
+      boxes = boxes.filter(b => b.id !== selectedBox.id);
+      closeBoxPanel(); saveAll(); markDirty();
+      toast('Box deleted');
+    }
+
+    function newBox() {
+      const dpr = window.devicePixelRatio || 1;
+      const cx = canvas.width / 2 / dpr, cy = canvas.height / 2 / dpr;
+      const tl = screenToWorld(cx - 100, cy - 80);
+      const box = {
+        id: nextId++, title: 'New Section',
+        color: SWATCH_COLORS[Math.floor(Math.random() * SWATCH_COLORS.length)],
+        x: tl.x, y: tl.y, w: 300, h: 200
+      };
+      boxes.push(box); saveAll(); openBoxPanel(box);
+      document.getElementById('boxTitle').select();
+    }
+
     function newNote() {
       const _dpr = window.devicePixelRatio || 1;
       const w = screenToWorld(canvas.width / 2 / _dpr + (Math.random() - 0.5) * 200, canvas.height / 2 / _dpr + (Math.random() - 0.5) * 200);
-      const note = { id: nextId++, title: '', content: '', tags: [], x: w.x, y: w.y };
+      const containing2 = boxContaining(w.x, w.y);
+      const note = { id: nextId++, title: '', content: '', tags: [], x: w.x, y: w.y, boxId: containing2?.id || null };
       notes.push(note); saveAll(); openNote(note);
       document.getElementById('noteTitle').focus();
     }
@@ -2819,6 +3274,7 @@
     // ═══════════════════════════════════════════════════════════════════
     //  PANEL RESIZE
     // ═══════════════════════════════════════════════════════════════════
+    // Note panel resize
     (function () {
       const handle = document.getElementById('panelResize');
       const panel = document.getElementById('notePanel');
@@ -2844,6 +3300,30 @@
         if (!resizing) return;
         resizing = false;
         handle.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      });
+    })();
+
+    // Box panel resize
+    (function () {
+      const handle = document.getElementById('boxPanelResize');
+      const panel = document.getElementById('boxPanel');
+      let resizing = false, startX = 0, startW = 0;
+      handle.addEventListener('mousedown', e => {
+        resizing = true; startX = e.clientX; startW = panel.offsetWidth;
+        handle.classList.add('dragging');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+      });
+      document.addEventListener('mousemove', e => {
+        if (!resizing) return;
+        panel.style.width = Math.max(280, Math.min(700, startW + (startX - e.clientX))) + 'px';
+      });
+      document.addEventListener('mouseup', () => {
+        if (!resizing) return;
+        resizing = false; handle.classList.remove('dragging');
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
       });
@@ -2886,7 +3366,7 @@
       // Escape closes modal or panel
       if (e.key === 'Escape') {
         if (document.getElementById('deleteModal').classList.contains('open')) { cancelDelete(); return; }
-        closePanel();
+        closeAllPanels();
       }
     });
 
