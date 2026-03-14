@@ -1651,7 +1651,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="brand">GARDEN</span>
-      <span class="version-badge">v0.14.1</span>
+      <span class="version-badge">v0.14.2</span>
       <div class="garden-switcher">
         <button class="garden-name-btn" id="gardenNameBtn" onclick="toggleGardenPopup()">Loading…</button>
         <button class="garden-dropdown-btn" onclick="toggleGardenPopup()">▾</button>
@@ -3003,6 +3003,8 @@
       renderBoxColorSwatches(box);
       renderBoxNotesList(box);
       renderBoxConnections(box);
+      document.getElementById('boxLinkSearch').value = '';
+      closeBoxLinkResults();
     }
 
     function renderBoxNotesList(box) {
@@ -3039,26 +3041,31 @@
 
     function addBoxLink(targetId) {
       if (!selectedBox || targetId === selectedBox.id) return;
-      if (boxLinks.find(l => (l.from === selectedBox.id && l.to === targetId) || (l.from === targetId && l.to === selectedBox.id))) return;
-      boxLinks.push({ from: selectedBox.id, to: targetId });
+      const idx = boxLinks.findIndex(l => (l.from === selectedBox.id && l.to === targetId) || (l.from === targetId && l.to === selectedBox.id));
+      if (idx >= 0) boxLinks.splice(idx, 1); else boxLinks.push({ from: selectedBox.id, to: targetId });
       renderBoxConnections(selectedBox);
-      document.getElementById('boxLinkSearch').value = '';
-      closeBoxLinkResults();
+      onBoxLinkSearch(); // refresh dropdown to update ✓
       saveAll(); markDirty();
     }
 
     function onBoxLinkSearch() {
+      if (!selectedBox) return;
       const q = document.getElementById('boxLinkSearch').value.toLowerCase();
       const res = document.getElementById('boxLinkResults');
-      if (!q) { res.classList.remove('open'); res.innerHTML = ''; return; }
-      const candidates = boxes.filter(b => b.id !== selectedBox?.id &&
-        (b.title || 'Untitled Section').toLowerCase().includes(q));
-      if (!candidates.length) { res.classList.remove('open'); return; }
-      res.innerHTML = candidates.slice(0, 8).map(b => {
-        const linked = boxLinks.find(l => (l.from === selectedBox.id && l.to === b.id) || (l.from === b.id && l.to === selectedBox.id));
+      const isLinked = id => boxLinks.some(l => (l.from === selectedBox.id && l.to === id) || (l.from === id && l.to === selectedBox.id));
+      const candidates = boxes
+        .filter(b => b.id !== selectedBox.id)
+        .filter(b => !q || (b.title || 'Untitled Section').toLowerCase().includes(q));
+      if (!candidates.length) {
+        res.innerHTML = `<div style="padding:10px 14px;font-size:0.85rem;color:var(--ink-dim);font-family:'Cormorant Garamond',serif;font-style:italic">No sections found</div>`;
+        res.classList.add('open'); return;
+      }
+      res.innerHTML = candidates.slice(0, 10).map(b => {
+        const linked = isLinked(b.id);
         return `<div class="link-result-item ${linked ? 'already-linked' : ''}" onmousedown="event.preventDefault();addBoxLink(${b.id})">
       <div class="link-dot" style="background:${b.color}"></div>
       <span>${b.title || 'Untitled Section'}</span>
+      ${linked ? `<span style="margin-left:auto;font-size:var(--icon-sz);color:var(--cyan);font-family:'JetBrains Mono',monospace">✓</span>` : ''}
     </div>`;
       }).join('');
       res.classList.add('open');
