@@ -746,6 +746,152 @@
       color: var(--yellow);
     }
 
+    /* CODEMIRROR THEME */
+    .CodeMirror {
+      flex: 1;
+      height: 100%;
+      min-height: 80px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.8;
+      background: transparent !important;
+      color: var(--ink-mid) !important;
+      border: none;
+      padding: 0;
+    }
+
+    .CodeMirror-scroll {
+      min-height: 80px;
+    }
+
+    .CodeMirror-lines {
+      padding: 0;
+    }
+
+    .CodeMirror-cursor {
+      border-left: 2px solid var(--cyan) !important;
+    }
+
+    .CodeMirror-selected {
+      background: rgba(0, 170, 170, 0.15) !important;
+    }
+
+    .CodeMirror-focused .CodeMirror-selected {
+      background: rgba(0, 170, 170, 0.2) !important;
+    }
+
+    .CodeMirror-gutters {
+      display: none;
+    }
+
+    .CodeMirror-scrollbar-fixer {
+      display: none;
+    }
+
+    /* Markdown token colours */
+    .cm-header {
+      color: var(--ink) !important;
+      font-weight: 400;
+    }
+
+    .cm-header-1 {
+      font-size: 1.35em;
+    }
+
+    .cm-header-2 {
+      font-size: 1.15em;
+    }
+
+    .cm-header-3 {
+      font-size: 1.05em;
+    }
+
+    .cm-strong {
+      color: var(--ink) !important;
+      font-weight: 700;
+    }
+
+    .cm-em {
+      font-style: italic;
+      color: var(--ink-mid) !important;
+    }
+
+    .cm-strikethrough {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    .cm-link {
+      color: var(--cyan) !important;
+    }
+
+    .cm-url {
+      color: var(--cyan) !important;
+      opacity: 0.7;
+    }
+
+    .cm-comment {
+      color: var(--ink-dim) !important;
+    }
+
+    .cm-quote {
+      color: var(--ink-dim) !important;
+      font-style: italic;
+      border-left: 2px solid var(--purple);
+      padding-left: 6px;
+    }
+
+    .cm-keyword,
+    .cm-atom {
+      color: var(--purple) !important;
+    }
+
+    .cm-string {
+      color: var(--green) !important;
+    }
+
+    .cm-variable {
+      color: var(--cyan) !important;
+    }
+
+    .cm-def {
+      color: var(--yellow) !important;
+    }
+
+    .cm-code {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--cyan) !important;
+      background: var(--lift);
+      padding: 0 3px;
+      border-radius: 2px;
+    }
+
+    .cm-hr {
+      color: var(--border) !important;
+    }
+
+    .cm-tag {
+      color: var(--red) !important;
+    }
+
+    .cm-placeholder {
+      color: var(--ink-dim) !important;
+      font-style: italic;
+    }
+
+    /* Light theme overrides */
+    html.light .CodeMirror {
+      color: var(--ink-mid) !important;
+    }
+
+    html.light .CodeMirror-cursor {
+      border-left-color: var(--cyan) !important;
+    }
+
+    html.light .CodeMirror-selected {
+      background: rgba(0, 120, 120, 0.12) !important;
+    }
+
     /* SECTION LABELS */
     .sec-label {
       font-size: 0.44rem;
@@ -941,45 +1087,14 @@
       min-height: 0;
     }
 
-    #noteContent {
+    #cmEditor {
       flex: 1;
-      width: 100%;
-      min-height: 80px;
-      background: none;
-      border: none;
-      outline: none;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.05rem;
-      font-weight: 300;
-      color: var(--ink-mid);
-      line-height: 1.8;
-      resize: none;
-      user-select: text;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
     }
 
-    #noteContent::placeholder {
-      color: var(--ink-dim);
-      font-style: italic;
-    }
-
-    /* MARKDOWN PREVIEW */
-    .md-preview {
-      flex: 1;
-      width: 100%;
-      min-height: 80px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.78rem;
-      font-weight: 300;
-      color: var(--ink-mid);
-      line-height: 1.8;
-      display: none;
-      cursor: text;
-      overflow-y: auto;
-    }
-
-    .md-preview.active {
-      display: block;
-    }
 
     .md-preview h1,
     .md-preview h2,
@@ -1178,39 +1293,6 @@
     }
 
     /* EDIT/PREVIEW TOGGLE */
-    .content-mode-toggle {
-      display: flex;
-      gap: 0;
-      margin-left: auto;
-    }
-
-    .mode-btn {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.44rem;
-      letter-spacing: 0.1em;
-      padding: 1px 7px;
-      border: 1px solid var(--border);
-      background: none;
-      color: var(--ink-dim);
-      cursor: pointer;
-      transition: all 0.15s;
-      text-transform: uppercase;
-    }
-
-    .mode-btn:first-child {
-      border-right: none;
-    }
-
-    .mode-btn.active {
-      background: var(--lift);
-      color: var(--ink);
-      border-color: var(--ink-dim);
-    }
-
-    .mode-btn:hover:not(.active) {
-      color: var(--ink);
-    }
-
     .sec-label--content::after {
       display: none;
     }
@@ -1651,7 +1733,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="brand">GARDEN</span>
-      <span class="version-badge">v0.14.2</span>
+      <span class="version-badge">v0.16.0</span>
       <div class="garden-switcher">
         <button class="garden-name-btn" id="gardenNameBtn" onclick="toggleGardenPopup()">Loading…</button>
         <button class="garden-dropdown-btn" onclick="toggleGardenPopup()">▾</button>
@@ -1735,16 +1817,10 @@
 
           <div class="content-section">
             <div class="sec-label sec-label--content" style="margin-top:8px">Content
-              <div class="content-mode-toggle">
-                <button class="mode-btn active" id="modeEdit" onclick="setContentMode('edit')">Edit</button>
-                <button class="mode-btn" id="modePreview" onclick="setContentMode('preview')">Preview</button>
-              </div>
               <span class="sec-divider-line"></span>
               <button class="ac-btn" id="acBtn" onclick="toggleAutocorrect()" title="Toggle autocorrect">AC</button>
             </div>
-            <textarea id="noteContent" placeholder="Write anything…" oninput="autoSave()" autocorrect="on"
-              autocapitalize="sentences" spellcheck="true"></textarea>
-            <div class="md-preview" id="mdPreview"></div>
+            <div id="cmEditor"></div>
           </div>
         </div>
 
@@ -1864,6 +1940,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/continuelist.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/placeholder.min.js"></script>
   <script>
     // ═══════════════════════════════════════════════════════════════════
     //  CONSTANTS
@@ -2393,8 +2474,11 @@
           if (!a || !b) return;
           const ac = worldToScreen(a.x + a.w / 2, a.y + a.h / 2);
           const bc = worldToScreen(b.x + b.w / 2, b.y + b.h / 2);
+          const grad = ctx.createLinearGradient(ac.x, ac.y, bc.x, bc.y);
+          grad.addColorStop(0, a.color + '99');
+          grad.addColorStop(1, b.color + '99');
           ctx.beginPath(); ctx.moveTo(ac.x, ac.y); ctx.lineTo(bc.x, bc.y);
-          ctx.strokeStyle = a.color + '88'; ctx.lineWidth = 1.5;
+          ctx.strokeStyle = grad; ctx.lineWidth = 1.5;
           ctx.setLineDash([6, 3]); ctx.stroke(); ctx.setLineDash([]);
         });
 
@@ -2729,7 +2813,8 @@
       document.getElementById('notePanel').classList.add('open');
       document.getElementById('panelNoteId').textContent = `note #${note.id}`;
       document.getElementById('noteTitle').value = note.title || '';
-      document.getElementById('noteContent').value = note.content || '';
+      if (cmInstance) setCMValue(note.content || '');
+      else document.addEventListener('cmReady', () => setCMValue(note.content || ''), { once: true });
       autoResize(document.getElementById('noteTitle'));
       renderTagsPanel();
       document.querySelectorAll('.meta-tag').forEach(el =>
@@ -2738,7 +2823,7 @@
       const ls = document.getElementById('linkSearch');
       if (ls) { ls.value = ''; closeLinkResults(); }
       // Open in preview if note has content, edit if blank so user can start typing
-      setContentMode(note.content && note.content.trim() ? 'preview' : 'edit');
+      setContentMode('preview');
       posLocked = true;
       document.getElementById('posLock').textContent = '🔒';
       document.getElementById('posLock').classList.remove('unlocked');
@@ -2858,7 +2943,7 @@
     function autoSave() {
       if (!selectedNote) return;
       selectedNote.title = document.getElementById('noteTitle').value.trim() || 'Untitled';
-      selectedNote.content = document.getElementById('noteContent').value;
+      selectedNote.content = getCMValue();
       selectedNote.tags = [...document.querySelectorAll('.meta-tag.selected')].map(el => el.dataset.tag);
       markDirty(); saveAll();
     }
@@ -3174,8 +3259,47 @@
       return marked.parse(src);
     }
 
-    let contentMode = 'edit';
-    let acEnabled = localStorage.getItem('garden_ac') !== 'false'; // default on
+    // ═══════════════════════════════════════════════════════════════════
+    //  CODEMIRROR EDITOR
+    // ═══════════════════════════════════════════════════════════════════
+    let cmInstance = null;
+
+    function initCM() {
+      const el = document.getElementById('cmEditor');
+      cmInstance = CodeMirror(el, {
+        mode: 'markdown',
+        theme: 'garden',
+        lineWrapping: true,
+        autofocus: false,
+        indentWithTabs: false,
+        extraKeys: { "Enter": "newlineAndIndentContinueMarkdownList" },
+        placeholder: 'Write anything…',
+        spellcheck: acEnabled,
+        autocorrect: acEnabled,
+        autocapitalize: acEnabled,
+      });
+      cmInstance.on('change', () => {
+        if (selectedNote) {
+          selectedNote.content = cmInstance.getValue();
+          saveAll();
+        }
+      });
+      // Fit CM to container height
+      cmInstance.setSize('100%', '100%');
+    }
+
+    function setCMValue(val) {
+      if (!cmInstance) return;
+      cmInstance.setValue(val || '');
+      cmInstance.clearHistory();
+    }
+
+    function getCMValue() {
+      return cmInstance ? cmInstance.getValue() : '';
+    }
+
+    // AC toggle wired to CM
+    let acEnabled = localStorage.getItem('garden_ac') !== 'false';
 
     function toggleAutocorrect() {
       acEnabled = !acEnabled;
@@ -3185,98 +3309,20 @@
     }
 
     function applyAcAttrs() {
-      const ta = document.getElementById('noteContent');
-      const on = acEnabled ? 'on' : 'off';
-      ta.autocorrect = on;
-      ta.autocapitalize = acEnabled ? 'sentences' : 'off';
-      ta.spellcheck = acEnabled;
+      if (!cmInstance) return;
+      cmInstance.setOption('spellcheck', acEnabled);
+      cmInstance.setOption('autocorrect', acEnabled);
+      cmInstance.setOption('autocapitalize', acEnabled);
     }
 
     function initAcBtn() {
       document.getElementById('acBtn').classList.toggle('active', acEnabled);
-      applyAcAttrs();
+      // CM is not ready yet at this point — applyAcAttrs called after initCM
     }
 
-    function setContentMode(mode, caretPos) {
-      contentMode = mode;
-      const ta = document.getElementById('noteContent');
-      const preview = document.getElementById('mdPreview');
-      const btnEdit = document.getElementById('modeEdit');
-      const btnPrev = document.getElementById('modePreview');
-      if (mode === 'preview') {
-        preview.innerHTML = renderMarkdown(ta.value);
-        previewSourceMap = buildPreviewSourceMap(ta.value, preview);
-        preview.classList.add('active');
-        ta.style.display = 'none';
-        btnEdit.classList.remove('active');
-        btnPrev.classList.add('active');
-      } else {
-        preview.classList.remove('active');
-        ta.style.display = '';
-        btnEdit.classList.add('active');
-        btnPrev.classList.remove('active');
-        ta.focus();
-        if (caretPos !== undefined) {
-          ta.setSelectionRange(caretPos, caretPos);
-        }
-      }
-    }
+    // setContentMode is a no-op now — CM handles everything
+    function setContentMode() { }
 
-    // previewSourceMap[renderedCharIndex] = sourceCharIndex
-    // Rebuilt each time setContentMode('preview') is called.
-    let previewSourceMap = [];
-
-    function buildPreviewSourceMap(src, previewEl) {
-      const rendered = previewEl.textContent;
-      const map = [];
-      let si = 0;
-      for (let ri = 0; ri < rendered.length; ri++) {
-        const rc = rendered[ri];
-        const rcWs = /\s/.test(rc);
-        while (si < src.length) {
-          const sc = src[si];
-          if (sc === rc || (rcWs && /\s/.test(sc))) break;
-          si++;
-        }
-        map.push(si);
-        if (si < src.length) si++;
-      }
-      return map;
-    }
-    function previewPointToTextOffset(cx, cy) {
-      let domNode = null, domOffset = 0;
-      if (document.caretRangeFromPoint) {
-        const r = document.caretRangeFromPoint(cx, cy);
-        if (r) { domNode = r.startContainer; domOffset = r.startOffset; }
-      } else if (document.caretPositionFromPoint) {
-        const p = document.caretPositionFromPoint(cx, cy);
-        if (p) { domNode = p.offsetNode; domOffset = p.offset; }
-      }
-      if (!domNode || !previewSourceMap.length) return null;
-
-      // Count rendered plain-text characters before the click point
-      const preview = document.getElementById('mdPreview');
-      const walker = document.createTreeWalker(preview, NodeFilter.SHOW_TEXT);
-      let renderedIdx = 0;
-      let node;
-      while ((node = walker.nextNode())) {
-        if (node === domNode) {
-          renderedIdx += domOffset;
-          break;
-        }
-        renderedIdx += node.textContent.length;
-      }
-
-      if (renderedIdx < previewSourceMap.length) return previewSourceMap[renderedIdx];
-      return previewSourceMap[previewSourceMap.length - 1] ?? null;
-    }
-
-    // Wire preview click: resolve caret position while preview is still visible,
-    // then switch to edit and place cursor there
-    document.getElementById('mdPreview').addEventListener('click', function (e) {
-      const pos = previewPointToTextOffset(e.clientX, e.clientY);
-      setContentMode('edit', pos ?? document.getElementById('noteContent').value.length);
-    });
 
     // ═══════════════════════════════════════════════════════════════════
     //  PANEL RESIZE
@@ -3404,6 +3450,9 @@
     applyTheme(currentTheme);
     initColorMode();
     initAcBtn();
+    initCM();
+    applyAcAttrs();
+    document.dispatchEvent(new Event('cmReady'));
 
     // ── close garden delete modal on backdrop click ──────────────────
     document.getElementById('gardenDeleteModal').addEventListener('click', e => {
