@@ -791,6 +791,105 @@
       text-decoration-color: var(--cyan);
     }
 
+    .cm-wikilink {
+      color: var(--purple);
+      cursor: pointer;
+      border-bottom: 1px solid rgba(139, 127, 207, 0.4);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .cm-wikilink:hover {
+      color: var(--purple);
+      border-bottom-color: var(--purple);
+    }
+
+    .cm-wikilink.missing {
+      color: var(--ink-dim);
+      border-bottom-style: dashed;
+    }
+
+    .cm-transclude {
+      display: block;
+      margin: 6px 0;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--purple);
+      background: var(--lift);
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .cm-transclude:hover {
+      border-color: var(--purple);
+    }
+
+    .cm-transclude-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.08em;
+      color: var(--purple);
+      text-transform: uppercase;
+    }
+
+    .cm-transclude-header .tc-icon {
+      font-size: 0.7rem;
+    }
+
+    .cm-transclude-body {
+      padding: 8px 12px;
+      max-height: 160px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.74rem;
+      line-height: 1.7;
+      color: var(--ink-mid);
+    }
+
+    .cm-transclude-body::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .cm-transclude-body::-webkit-scrollbar-thumb {
+      background: var(--border);
+    }
+
+    .cm-transclude-body h1,
+    .cm-transclude-body h2,
+    .cm-transclude-body h3 {
+      font-size: 0.85rem;
+      font-weight: 400;
+      color: var(--ink);
+      margin: 0.4em 0 0.2em;
+    }
+
+    .cm-transclude-body p {
+      margin: 0 0 0.4em;
+    }
+
+    .cm-transclude-body p:last-child {
+      margin: 0;
+    }
+
+    .cm-transclude-body code {
+      color: var(--cyan);
+      background: var(--surface);
+      padding: 0 3px;
+    }
+
+    .cm-transclude-missing {
+      padding: 8px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--ink-dim);
+      font-style: italic;
+    }
+
     /* CODEMIRROR THEME */
     .CodeMirror {
       flex: 1;
@@ -1778,7 +1877,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="brand">GARDEN</span>
-      <span class="version-badge">v0.16.2</span>
+      <span class="version-badge">v0.17.2</span>
       <div class="garden-switcher">
         <button class="garden-name-btn" id="gardenNameBtn" onclick="toggleGardenPopup()">Loading…</button>
         <button class="garden-dropdown-btn" onclick="toggleGardenPopup()">▾</button>
@@ -3335,6 +3434,7 @@
     // ── CM widgets: checkboxes + clickable links ────────────────────────
     const _cmMarks = [];
     let _cmWidgetTimer = null;
+    const _cmEditingLines = new Set(); // lines where user is editing raw syntax
     function renderCMWidgets() {
       clearTimeout(_cmWidgetTimer);
       _cmWidgetTimer = setTimeout(_doRenderCMWidgets, 80);
@@ -3347,6 +3447,7 @@
       const doc = cmInstance.getDoc();
       const lineCount = doc.lineCount();
       for (let i = 0; i < lineCount; i++) {
+        if (_cmEditingLines.has(i)) continue; // user is editing raw syntax here
         const text = doc.getLine(i);
         // Task list checkboxes: "- [ ] " or "- [x] "
         const cbMatch = text.match(/^(\s*[-*+]\s+)(\[([ xX])\])(\s)/);
@@ -3368,11 +3469,174 @@
           });
           const mark = doc.markText(
             { line: i, ch: start }, { line: i, ch: end },
-            { replacedWith: el, handleMouseEvents: false }
+            { replacedWith: el, handleMouseEvents: true }
           );
           _cmMarks.push(mark);
         }
+        // Transclusion: ![[Note Title]] or ![[Note Title#Heading]]
+        const transRe = /!\[\[([^\]]+)\]\]/g;
+        let tm;
+        while ((tm = transRe.exec(text)) !== null) {
+          const fullStart = tm.index;
+          const fullEnd = fullStart + tm[0].length;
+          const ref = tm[1]; // "Note Title" or "Note Title#Heading"
+          const hashIdx = ref.indexOf('#');
+          const noteTitle = hashIdx >= 0 ? ref.slice(0, hashIdx) : ref;
+          const heading = hashIdx >= 0 ? ref.slice(hashIdx + 1) : null;
+          const target = notes.find(n => n.title === noteTitle);
+
+          const wrap = document.createElement('div');
+          wrap.className = 'cm-transclude';
+
+          const header = document.createElement('div');
+          header.className = 'cm-transclude-header';
+          header.innerHTML = `<span class="tc-icon">⎘</span>${noteTitle}${heading ? ` <span style="opacity:.6">#${heading}</span>` : ''}`;
+          wrap.appendChild(header);
+
+          const body = document.createElement('div');
+          if (target) {
+            let content = target.content || '';
+            if (heading) {
+              // Extract only the section under the matching heading
+              const lines = content.split('\n');
+              const slugify = h => h.toLowerCase().replace(/[_-]/g, ' ').replace(/[^a-z0-9 ]/g, '').trim();
+              const slug = slugify(heading);
+              let inSection = false, sectionLines = [];
+              let headingLevel = 0;
+              for (const ln of lines) {
+                const hm = ln.match(/^(#{1,6})\s+(.+)/);
+                if (hm) {
+                  const lvl = hm[1].length;
+                  const title = slugify(hm[2]);
+                  if (!inSection && title === slug) {
+                    inSection = true;
+                    headingLevel = lvl;
+                    sectionLines.push(ln);
+                  } else if (inSection && lvl <= headingLevel) {
+                    break; // next heading at same/higher level
+                  } else if (inSection) {
+                    sectionLines.push(ln);
+                  }
+                } else if (inSection) {
+                  sectionLines.push(ln);
+                }
+              }
+              content = sectionLines.length ? sectionLines.join('\n') : '*(Heading not found)*';
+            }
+            body.className = 'cm-transclude-body';
+            body.innerHTML = renderMarkdown(content);
+          } else {
+            body.className = 'cm-transclude-missing';
+            body.textContent = `Note "${noteTitle}" not found`;
+          }
+          wrap.appendChild(body);
+
+          // Cmd+click opens note; plain click exposes raw syntax
+          let transcludeMark;
+          wrap.addEventListener('click', e => {
+            e.preventDefault(); e.stopPropagation();
+            if (e.metaKey || e.ctrlKey) { if (target) openNote(target); return; }
+            const pos = transcludeMark.find();
+            if (pos) {
+              transcludeMark.clear();
+              _cmMarks.splice(_cmMarks.indexOf(transcludeMark), 1);
+              cmInstance.focus(); cmInstance.setCursor(pos.from);
+              const editLine = pos.from.line;
+              _cmEditingLines.add(editLine);
+              const onCursor = () => {
+                if (cmInstance.getCursor().line !== editLine) {
+                  cmInstance.off('cursorActivity', onCursor); cmInstance.off('blur', onCursor);
+                  _cmEditingLines.delete(editLine);
+                  renderCMWidgets();
+                }
+              };
+              cmInstance.on('cursorActivity', onCursor); cmInstance.on('blur', onCursor);
+            }
+          });
+          wrap.addEventListener('mousedown', e => e.stopPropagation());
+
+          transcludeMark = doc.markText(
+            { line: i, ch: fullStart }, { line: i, ch: fullEnd },
+            { replacedWith: wrap, handleMouseEvents: true }
+          );
+          _cmMarks.push(transcludeMark);
+        }
+
+        // Wikilinks: [[Note Title]] or [[Note Title#Heading]]
+        // Must not be preceded by ! (those are handled as transclusions above)
+        const wikiRe = /(?<!!)\[\[([^\]]+)\]\]/g;
+        let wm;
+        while ((wm = wikiRe.exec(text)) !== null) {
+          const fullStart = wm.index;
+          const fullEnd = fullStart + wm[0].length;
+          const ref = wm[1];
+          const hashIdx = ref.indexOf('#');
+          const noteTitle = hashIdx >= 0 ? ref.slice(0, hashIdx) : ref;
+          const heading = hashIdx >= 0 ? ref.slice(hashIdx + 1) : null;
+          const target = notes.find(n => n.title === noteTitle);
+
+          const span = document.createElement('span');
+          span.textContent = heading ? `${noteTitle} › ${heading}` : noteTitle;
+          span.className = 'cm-wikilink' + (target ? '' : ' missing');
+          span.title = target ? `Cmd+click to open "${noteTitle}"` : `Note "${noteTitle}" not found`;
+
+          span.addEventListener('click', e => {
+            e.preventDefault(); e.stopPropagation();
+            if (e.metaKey || e.ctrlKey) {
+              if (!target) return;
+              openNote(target);
+              // Scroll to heading after note opens
+              if (heading) {
+                setTimeout(() => {
+                  if (!cmInstance) return;
+                  const slugify2 = h => h.toLowerCase().replace(/[_-]/g, ' ').replace(/[^a-z0-9 ]/g, '').trim();
+                  const slug = slugify2(heading);
+                  const d = cmInstance.getDoc();
+                  for (let ln = 0; ln < d.lineCount(); ln++) {
+                    const txt = slugify2(d.getLine(ln).replace(/^#+\s*/, ''));
+                    if (txt === slug) {
+                      cmInstance.scrollIntoView({ line: ln, ch: 0 }, 40);
+                      cmInstance.setCursor({ line: ln, ch: 0 });
+                      return;
+                    }
+                  }
+                }, 120); // wait for openNote to load content
+              }
+              return;
+            }
+            // Plain click: expose raw syntax for editing
+            const pos = wikilinkMark.find();
+            if (pos) {
+              wikilinkMark.clear();
+              _cmMarks.splice(_cmMarks.indexOf(wikilinkMark), 1);
+              cmInstance.focus();
+              cmInstance.setCursor(pos.from);
+              const editLine = pos.from.line;
+              _cmEditingLines.add(editLine);
+              const onCursor = () => {
+                if (cmInstance.getCursor().line !== editLine) {
+                  cmInstance.off('cursorActivity', onCursor);
+                  cmInstance.off('blur', onCursor);
+                  _cmEditingLines.delete(editLine);
+                  renderCMWidgets();
+                }
+              };
+              cmInstance.on('cursorActivity', onCursor);
+              cmInstance.on('blur', onCursor);
+            }
+          });
+          span.addEventListener('mousedown', e => e.stopPropagation());
+
+          let wikilinkMark;
+          wikilinkMark = doc.markText(
+            { line: i, ch: fullStart }, { line: i, ch: fullEnd },
+            { replacedWith: span, handleMouseEvents: true }
+          );
+          _cmMarks.push(wikilinkMark);
+        }
+
         // Inline links: [text](url) — make the visible text cyan + underline
+
         const linkRe = /\[([^\]]+)\]\(([^)]+)\)/g;
         let lm;
         while ((lm = linkRe.exec(text)) !== null) {
@@ -3384,16 +3648,54 @@
           span.className = 'cm-link-widget';
           span.title = url;
           span.addEventListener('click', e => {
+            e.preventDefault(); e.stopPropagation();
             if (e.metaKey || e.ctrlKey) {
-              // Try to find a note with matching title
+              // Cmd+click: follow the link
+              if (url.startsWith('http')) { window.open(url, '_blank', 'noopener'); return; }
+              if (url.startsWith('#')) {
+                const slugify3 = h => h.toLowerCase().replace(/[_-]/g, ' ').replace(/[^a-z0-9 ]/g, '').trim();
+                const slug = slugify3(url.slice(1));
+                const doc = cmInstance.getDoc();
+                for (let ln = 0; ln < doc.lineCount(); ln++) {
+                  const txt = slugify3(doc.getLine(ln).replace(/^#+\s*/, ''));
+                  if (txt === slug) {
+                    cmInstance.scrollIntoView({ line: ln, ch: 0 }, 40);
+                    cmInstance.setCursor({ line: ln, ch: 0 });
+                    return;
+                  }
+                }
+              }
+              // Cmd+click on note link
               const target = notes.find(n => n.title === label || n.title === url);
               if (target) { openNote(target); return; }
+              return;
             }
-            if (url.startsWith('http')) window.open(url, '_blank', 'noopener');
+            // Regular click: clear this mark so raw markdown is exposed for editing
+            const pos = mark.find();
+            if (pos) {
+              mark.clear();
+              _cmMarks.splice(_cmMarks.indexOf(mark), 1);
+              cmInstance.focus();
+              cmInstance.setCursor(pos.from);
+              // Re-render when cursor leaves this line (click away or arrow key)
+              const editLine = pos.from.line;
+              _cmEditingLines.add(editLine);
+              const onCursor = () => {
+                if (cmInstance.getCursor().line !== editLine) {
+                  cmInstance.off('cursorActivity', onCursor);
+                  cmInstance.off('blur', onCursor);
+                  _cmEditingLines.delete(editLine);
+                  renderCMWidgets();
+                }
+              };
+              cmInstance.on('cursorActivity', onCursor);
+              cmInstance.on('blur', onCursor);
+            }
           });
-          const mark = doc.markText(
+          let mark;
+          mark = doc.markText(
             { line: i, ch: fullStart }, { line: i, ch: fullEnd },
-            { replacedWith: span, handleMouseEvents: false }
+            { replacedWith: span, handleMouseEvents: true }
           );
           _cmMarks.push(mark);
         }
