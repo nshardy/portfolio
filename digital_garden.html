@@ -1778,7 +1778,7 @@
       renderTagsPanel();
       renderFilterBar();
       renderLegend();
-      markDirty();
+      resetView();
     }
 
     // Init
@@ -2446,7 +2446,25 @@
       document.getElementById('noteTitle').focus();
     }
 
-    function resetView() { vpX = 0; vpY = 0; vpScale = 1; markDirty(); }
+    function resetView() {
+      if (!notes.length) { vpX = 0; vpY = 0; vpScale = 1; markDirty(); return; }
+      const dpr = window.devicePixelRatio || 1;
+      const cw = canvas.width / dpr, ch = canvas.height / dpr;
+      // Centroid of all notes
+      const mx = notes.reduce((s, n) => s + n.x, 0) / notes.length;
+      const my = notes.reduce((s, n) => s + n.y, 0) / notes.length;
+      // Fit scale so all notes are visible with padding
+      const xs = notes.map(n => n.x), ys = notes.map(n => n.y);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
+      const pad = 80;
+      const rangeX = maxX - minX + pad * 2, rangeY = maxY - minY + pad * 2;
+      const scale = Math.min(3, Math.max(0.2, Math.min(cw / rangeX, ch / rangeY)));
+      vpScale = scale;
+      // Centre viewport on centroid
+      vpX = -mx; vpY = -my;
+      markDirty();
+    }
 
     // ═══════════════════════════════════════════════════════════════════
     //  MARKDOWN
