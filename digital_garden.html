@@ -1183,6 +1183,41 @@
       color: var(--ink);
     }
 
+    .sec-label--content::after {
+      display: none;
+    }
+
+    .sec-divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .ac-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.44rem;
+      letter-spacing: 0.1em;
+      padding: 1px 7px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--ink-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .ac-btn:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .ac-btn.active {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      background: rgba(0, 170, 170, 0.08);
+    }
+
     /* CONNECTIONS */
     .link-list {
       display: flex;
@@ -1588,7 +1623,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="brand">GARDEN</span>
-      <span class="version-badge">v0.11.0</span>
+      <span class="version-badge">v0.12.0</span>
       <div class="garden-switcher">
         <button class="garden-name-btn" id="gardenNameBtn" onclick="toggleGardenPopup()">Loading…</button>
         <button class="garden-dropdown-btn" onclick="toggleGardenPopup()">▾</button>
@@ -1670,13 +1705,16 @@
           </div>
 
           <div class="content-section">
-            <div class="sec-label" style="margin-top:8px">Content
+            <div class="sec-label sec-label--content" style="margin-top:8px">Content
               <div class="content-mode-toggle">
                 <button class="mode-btn active" id="modeEdit" onclick="setContentMode('edit')">Edit</button>
                 <button class="mode-btn" id="modePreview" onclick="setContentMode('preview')">Preview</button>
               </div>
+              <span class="sec-divider-line"></span>
+              <button class="ac-btn" id="acBtn" onclick="toggleAutocorrect()" title="Toggle autocorrect">AC</button>
             </div>
-            <textarea id="noteContent" placeholder="Write anything…" oninput="autoSave()"></textarea>
+            <textarea id="noteContent" placeholder="Write anything…" oninput="autoSave()" autocorrect="on"
+              autocapitalize="sentences" spellcheck="true"></textarea>
             <div class="md-preview" id="mdPreview"></div>
           </div>
         </div>
@@ -2436,6 +2474,7 @@
       document.getElementById('posX').disabled = true;
       document.getElementById('posY').disabled = true;
       updatePosFields();
+      applyAcAttrs();
     }
 
     // ── Position widget ─────────────────────────────────────────────────
@@ -2674,6 +2713,27 @@
     }
 
     let contentMode = 'edit';
+    let acEnabled = localStorage.getItem('garden_ac') !== 'false'; // default on
+
+    function toggleAutocorrect() {
+      acEnabled = !acEnabled;
+      localStorage.setItem('garden_ac', String(acEnabled));
+      applyAcAttrs();
+      document.getElementById('acBtn').classList.toggle('active', acEnabled);
+    }
+
+    function applyAcAttrs() {
+      const ta = document.getElementById('noteContent');
+      const on = acEnabled ? 'on' : 'off';
+      ta.autocorrect = on;
+      ta.autocapitalize = acEnabled ? 'sentences' : 'off';
+      ta.spellcheck = acEnabled;
+    }
+
+    function initAcBtn() {
+      document.getElementById('acBtn').classList.toggle('active', acEnabled);
+      applyAcAttrs();
+    }
 
     function setContentMode(mode, caretPos) {
       contentMode = mode;
@@ -2856,6 +2916,7 @@
 
     applyTheme(currentTheme);
     initColorMode();
+    initAcBtn();
 
     // ── close garden delete modal on backdrop click ──────────────────
     document.getElementById('gardenDeleteModal').addEventListener('click', e => {
