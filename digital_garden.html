@@ -1516,7 +1516,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="brand">GARDEN</span>
-      <span class="version-badge">v0.8.0</span>
+      <span class="version-badge">v0.9.0</span>
       <div class="garden-switcher">
         <button class="garden-name-btn" id="gardenNameBtn" onclick="toggleGardenPopup()">Loading…</button>
         <button class="garden-dropdown-btn" onclick="toggleGardenPopup()">▾</button>
@@ -1691,6 +1691,7 @@
     let activeTags = new Set();
     let vpX = 0, vpY = 0, vpScale = 1;
     let isDragging = false, dragStartX = 0, dragStartY = 0, dragVpX = 0, dragVpY = 0;
+    let isBoxSelecting = false, boxSelStartX = 0, boxSelStartY = 0, boxSelCurX = 0, boxSelCurY = 0;
     let nodeDragging = null, nodeDragOffX = 0, nodeDragOffY = 0;
     let nodeDragMoved = false, nodeDragStartX = 0, nodeDragStartY = 0;
     let legendVisible = true;
@@ -2178,6 +2179,20 @@
           }
           ctx.globalAlpha = 1;
         });
+        // Box-select overlay
+        if (isBoxSelecting) {
+          const isLight = document.documentElement.classList.contains('light');
+          ctx.beginPath();
+          ctx.rect(
+            Math.min(boxSelStartX, boxSelCurX), Math.min(boxSelStartY, boxSelCurY),
+            Math.abs(boxSelCurX - boxSelStartX), Math.abs(boxSelCurY - boxSelStartY)
+          );
+          ctx.fillStyle = isLight ? 'rgba(0,100,100,0.06)' : 'rgba(0,170,170,0.08)';
+          ctx.fill();
+          ctx.strokeStyle = isLight ? 'rgba(0,100,100,0.4)' : 'rgba(0,170,170,0.5)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
+        }
         drawMinimap();
       }
       requestAnimationFrame(draw);
@@ -2224,11 +2239,16 @@
         const s = worldToScreen(hit.x, hit.y); nodeDragOffX = cx - s.x; nodeDragOffY = cy - s.y;
         canvas.classList.add('dragging');
       } else {
-        // Snapshot selection for dblclick before clearing — dblclick fires after mousedown
         lastMousedownSelection = new Set(selectedNotes);
-        if (!e.metaKey && !e.ctrlKey) selectedNotes.clear();
-        isDragging = true; dragStartX = cx; dragStartY = cy; dragVpX = vpX; dragVpY = vpY;
-        canvas.classList.add('dragging');
+        if (e.metaKey || e.ctrlKey) {
+          // Box select mode
+          isBoxSelecting = true; boxSelStartX = cx; boxSelStartY = cy; boxSelCurX = cx; boxSelCurY = cy;
+          canvas.classList.add('dragging');
+        } else {
+          selectedNotes.clear();
+          isDragging = true; dragStartX = cx; dragStartY = cy; dragVpX = vpX; dragVpY = vpY;
+          canvas.classList.add('dragging');
+        }
       }
     });
 
@@ -2243,11 +2263,14 @@
         }
         return;
       }
+      if (isBoxSelecting) {
+        boxSelCurX = cx; boxSelCurY = cy; return;
+      }
       if (isDragging) {
         vpX = dragVpX + (cx - dragStartX) / vpScale; vpY = dragVpY + (cy - dragStartY) / vpScale; return;
       }
       hoveredNote = noteAt(cx, cy);
-      canvas.style.cursor = hoveredNote ? 'pointer' : 'grab';
+      canvas.style.cursor = (e.metaKey || e.ctrlKey) ? 'crosshair' : (hoveredNote ? 'pointer' : 'grab');
     });
 
     canvas.addEventListener('mouseup', e => {
@@ -2256,6 +2279,17 @@
           if (selectedNotes.size === 0) openNote(nodeDragging);
         } else saveAll();
         nodeDragging = null; nodeDragMoved = false; canvas.classList.remove('dragging'); return;
+      }
+      if (isBoxSelecting) {
+        // Select all notes whose world position falls inside the box
+        const wx0 = Math.min(boxSelStartX, boxSelCurX), wx1 = Math.max(boxSelStartX, boxSelCurX);
+        const wy0 = Math.min(boxSelStartY, boxSelCurY), wy1 = Math.max(boxSelStartY, boxSelCurY);
+        const w0 = screenToWorld(wx0, wy0), w1 = screenToWorld(wx1, wy1);
+        notes.forEach(n => {
+          if (n.x >= w0.x && n.x <= w1.x && n.y >= w0.y && n.y <= w1.y) selectedNotes.add(n.id);
+        });
+        selectedNote = selectedNotes.size === 1 ? notes.find(n => n.id === [...selectedNotes][0]) : null;
+        isBoxSelecting = false; canvas.classList.remove('dragging'); markDirty(); return;
       }
       if (isDragging) {
         const { x: cx, y: cy } = canvasXY(e);
@@ -2625,6 +2659,15 @@
     });
 
     document.addEventListener('keydown', e => {
+      // Cmd/Ctrl+A — select all notes (not while editing)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+        const tag = document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        e.preventDefault();
+        notes.forEach(n => selectedNotes.add(n.id));
+        selectedNote = null;
+        markDirty(); return;
+      }
       // Backspace on a selected note (not while typing in an input/textarea)
       if (e.key === 'Backspace' || e.key === 'Delete') {
         const tag = document.activeElement.tagName;
