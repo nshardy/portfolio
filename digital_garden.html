@@ -165,19 +165,20 @@
     .tag-filter-bar {
       display: flex;
       align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
+      gap: 8px;
       padding: 0 20px;
       height: 0;
-      overflow: hidden;
+      overflow: visible;
       background: var(--surface);
       border-bottom: 0px solid var(--border);
       transition: height 0.2s, padding 0.2s, border-width 0.2s;
       flex-shrink: 0;
+      position: relative;
+      z-index: 40;
     }
 
     .tag-filter-bar.has-tags {
-      height: 38px;
+      height: 36px;
       border-bottom-width: 1px;
     }
 
@@ -190,43 +191,83 @@
       flex-shrink: 0;
     }
 
-    .filter-tag {
-      font-size: 0.44rem;
-      letter-spacing: 0.1em;
-      padding: 2px 8px;
-      border: 1px solid var(--border);
-      color: var(--ink-dim);
-      cursor: pointer;
-      transition: all 0.15s;
-      text-transform: uppercase;
+    .filter-dropdown-wrap {
+      position: relative;
+    }
+
+    .filter-dropdown-btn {
       display: flex;
       align-items: center;
       gap: 5px;
-      white-space: nowrap;
       font-family: 'JetBrains Mono', monospace;
+      font-size: 0.44rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border: 1px solid var(--border);
       background: none;
+      color: var(--ink-dim);
+      cursor: pointer;
+      transition: all 0.15s;
     }
 
-    .filter-tag .ftag-dot {
-      width: 5px;
-      height: 5px;
+    .filter-dropdown-btn:hover {
+      color: var(--ink);
+      border-color: var(--ink-dim);
+    }
+
+    .filter-dropdown-btn.active {
+      color: var(--cyan);
+      border-color: var(--cyan);
+    }
+
+    .filter-dropdown-btn .fdb-arrow {
+      font-size: 0.5rem;
+    }
+
+    .filter-active-chips {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      flex-wrap: nowrap;
+      overflow: hidden;
+    }
+
+    .filter-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.44rem;
+      letter-spacing: 0.08em;
+      padding: 2px 6px;
+      border: 1px solid var(--ftag-color);
+      color: var(--ftag-color);
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .filter-chip:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .filter-chip .chip-dot {
+      width: 4px;
+      height: 4px;
       border-radius: 50%;
+      background: currentColor;
       flex-shrink: 0;
     }
 
-    .filter-tag.active {
-      color: var(--ftag-color);
-      border-color: var(--ftag-color);
-      background: transparent;
-    }
-
-    .filter-tag:hover {
-      border-color: var(--ftag-color);
+    .filter-chip .chip-x {
+      opacity: 0.6;
+      margin-left: 2px;
     }
 
     .filter-clear {
       font-size: 0.44rem;
-      letter-spacing: 0.1em;
       color: var(--ink-dim);
       cursor: pointer;
       padding: 2px 6px;
@@ -234,12 +275,77 @@
       background: none;
       font-family: 'JetBrains Mono', monospace;
       transition: color 0.15s;
-      margin-left: auto;
-      flex-shrink: 0;
+      white-space: nowrap;
     }
 
     .filter-clear:hover {
       color: var(--red);
+    }
+
+    .filter-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      z-index: 300;
+      background: var(--lift);
+      border: 1px solid var(--border);
+      min-width: 180px;
+      max-height: 260px;
+      overflow-y: auto;
+      display: none;
+      flex-direction: column;
+    }
+
+    .filter-dropdown.open {
+      display: flex;
+    }
+
+    .filter-dropdown::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .filter-dropdown::-webkit-scrollbar-thumb {
+      background: var(--border);
+    }
+
+    .filter-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.44rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      border: none;
+      background: none;
+      text-align: left;
+      width: 100%;
+    }
+
+    .filter-option:hover {
+      background: var(--surface);
+      color: var(--ink);
+    }
+
+    .filter-option.active {
+      color: var(--ftag-color);
+    }
+
+    .filter-option .fo-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .filter-option .fo-check {
+      margin-left: auto;
+      font-size: 0.6rem;
+      color: var(--ftag-color);
     }
 
     /* GARDEN POPUP */
@@ -932,77 +1038,167 @@
       display: none;
     }
 
-    /* Markdown token colours */
-    .cm-header {
+    /* Markdown token colours — scoped to garden theme */
+    .cm-s-garden .cm-header,
+    .cm-s-garden .cm-header-1,
+    .cm-s-garden .cm-header-2,
+    .cm-s-garden .cm-header-3,
+    .cm-s-garden .cm-header-4,
+    .cm-s-garden .cm-header-5,
+    .cm-s-garden .cm-header-6 {
       color: var(--ink) !important;
       font-weight: 400;
     }
 
-    .cm-header-1 {
-      font-size: 1.35em;
+    .cm-s-garden .cm-header-1 {
+      font-size: 1.4em !important;
+      line-height: 1.4;
     }
 
-    .cm-header-2 {
-      font-size: 1.15em;
+    .cm-s-garden .cm-header-2 {
+      font-size: 1.2em !important;
+      line-height: 1.4;
     }
 
-    .cm-header-3 {
-      font-size: 1.05em;
+    .cm-s-garden .cm-header-3 {
+      font-size: 1.08em !important;
     }
 
-    .cm-strong {
+    /* Hide the # symbols in headers for cleaner look */
+    .cm-s-garden .cm-formatting-header {
+      color: var(--ink-dim) !important;
+      font-size: 0.7em;
+      opacity: 0.5;
+    }
+
+    .cm-s-garden .cm-strong {
       color: var(--ink) !important;
       font-weight: 700;
     }
 
-    .cm-em {
+    .cm-s-garden .cm-em {
       font-style: italic;
       color: var(--ink-mid) !important;
     }
 
-    .cm-strikethrough {
+    .cm-s-garden .cm-strikethrough {
       text-decoration: line-through;
       opacity: 0.5;
     }
 
-    .cm-link {
+    .cm-s-garden .cm-link {
       color: var(--cyan) !important;
     }
 
-    .cm-url {
+    .cm-s-garden .cm-url {
       color: var(--cyan) !important;
       opacity: 0.7;
     }
 
-    .cm-comment {
-      color: var(--ink-dim) !important;
+    .cm-s-garden .cm-comment {
+      color: var(--ink-mid) !important;
     }
 
-    .cm-quote {
+    /* Fenced code block line styling */
+    .cm-s-garden .cm-fenced-code {
+      background: var(--lift) !important;
+      display: block;
+      font-family: 'JetBrains Mono', monospace !important;
+      border-left: 1px solid var(--border) !important;
+      border-right: 1px solid var(--border) !important;
+      padding: 0 10px !important;
+      color: var(--ink-mid) !important;
+      font-size: 0.88em;
+      line-height: 1.7;
+    }
+
+    /* Fenced code block: open line becomes header bar */
+    .cm-s-garden .cm-fenced-code-open {
+      background: var(--surface) !important;
+      border: 1px solid var(--border) !important;
+      border-bottom: none !important;
+      border-radius: 4px 4px 0 0 !important;
+      margin-top: 6px !important;
+      padding: 0 10px !important;
+      font-size: 0.72em !important;
+      color: var(--ink-dim) !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+
+    .cm-s-garden .cm-fenced-code-close {
+      background: var(--lift) !important;
+      border: 1px solid var(--border) !important;
+      border-top: none !important;
+      border-radius: 0 0 4px 4px !important;
+      margin-bottom: 6px !important;
+      height: 8px !important;
+      overflow: hidden !important;
+      font-size: 0 !important;
+    }
+
+    .cm-fence-copy {
+      position: absolute;
+      right: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--ink-dim);
+      cursor: pointer;
+      padding: 2px 6px;
+      transition: all 0.15s;
+      z-index: 10;
+    }
+
+    .cm-fence-copy:hover {
+      color: var(--cyan);
+      border-color: var(--cyan);
+    }
+
+    .cm-fence-header-widget {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 4px 10px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .cm-fence-lang {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--ink-dim);
+      text-transform: lowercase;
+    }
+
+    .cm-s-garden .cm-quote {
       color: var(--ink-dim) !important;
       font-style: italic;
-      border-left: 2px solid var(--purple);
-      padding-left: 6px;
     }
 
-    .cm-keyword,
-    .cm-atom {
+    .cm-s-garden .cm-keyword,
+    .cm-s-garden .cm-atom {
       color: var(--purple) !important;
     }
 
-    .cm-string {
+    .cm-s-garden .cm-string {
       color: var(--green) !important;
     }
 
-    .cm-variable {
+    .cm-s-garden .cm-variable {
       color: var(--cyan) !important;
     }
 
-    .cm-def {
+    .cm-s-garden .cm-def {
       color: var(--yellow) !important;
     }
 
-    .cm-code {
+    .cm-s-garden .cm-inline-code,
+    .cm-s-garden .cm-code {
       font-family: 'JetBrains Mono', monospace;
       color: var(--cyan) !important;
       background: var(--lift);
@@ -1010,17 +1206,22 @@
       border-radius: 2px;
     }
 
-    .cm-hr {
+    .cm-s-garden .cm-hr {
       color: var(--border) !important;
     }
 
-    .cm-tag {
+    .cm-s-garden .cm-tag {
       color: var(--red) !important;
     }
 
-    .cm-placeholder {
+    .cm-s-garden .cm-placeholder {
       color: var(--ink-dim) !important;
       font-style: italic;
+    }
+
+    /* Code block background */
+    .cm-s-garden pre.CodeMirror-line>span {
+      font-family: 'JetBrains Mono', monospace;
     }
 
     /* Light theme overrides */
@@ -1034,6 +1235,14 @@
 
     html.light .CodeMirror-selected {
       background: rgba(0, 120, 120, 0.12) !important;
+    }
+
+    html.light .cm-s-garden .cm-header {
+      color: var(--ink) !important;
+    }
+
+    html.light .cm-s-garden .cm-strong {
+      color: var(--ink) !important;
     }
 
     /* SECTION LABELS */
@@ -1186,13 +1395,6 @@
 
     .box-panel.open {
       transform: translateX(0);
-    }
-
-    .box-color-swatches {
-      display: flex;
-      gap: 5px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
     }
 
     /* PANEL RESIZE HANDLE */
@@ -1877,7 +2079,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="brand">GARDEN</span>
-      <span class="version-badge">v0.17.2</span>
+      <span class="version-badge">v0.19.2</span>
       <div class="garden-switcher">
         <button class="garden-name-btn" id="gardenNameBtn" onclick="toggleGardenPopup()">Loading…</button>
         <button class="garden-dropdown-btn" onclick="toggleGardenPopup()">▾</button>
@@ -1919,6 +2121,14 @@
 
   <div class="tag-filter-bar" id="tagFilterBar">
     <span class="filter-label">Filter</span>
+    <div class="filter-dropdown-wrap" id="filterDropdownWrap">
+      <button class="filter-dropdown-btn" id="filterDropdownBtn" onclick="toggleFilterDropdown()">
+        Tags <span class="fdb-arrow">▾</span>
+      </button>
+      <div class="filter-dropdown" id="filterDropdown"></div>
+    </div>
+    <div class="filter-active-chips" id="filterActiveChips"></div>
+    <button class="filter-clear" id="filterClearBtn" onclick="clearTagFilter()" style="display:none">clear ×</button>
   </div>
 
   <div class="layout">
@@ -2025,8 +2235,18 @@
               step="0.01" disabled></div>
           <div style="width:38px"></div>
         </div>
-        <div class="sec-label" style="margin-top:12px">Color</div>
-        <div class="box-color-swatches" id="boxColorSwatches"></div>
+        <div class="sec-label" style="margin-top:12px">Tags</div>
+        <div class="panel-meta" id="boxPanelMeta"></div>
+        <div class="new-tag-form" id="boxNewTagForm">
+          <div class="new-tag-row">
+            <input class="new-tag-input" id="boxNewTagName" placeholder="tag name…" maxlength="20"
+              onkeydown="if(event.key==='Enter')createBoxTag()">
+            <button class="tb-btn" onclick="createBoxTag()" style="padding:4px 8px">Add</button>
+            <button class="tb-btn" onclick="closeBoxNewTagForm()" style="padding:4px 6px">✕</button>
+          </div>
+          <div class="color-swatches" id="boxNewTagSwatches"></div>
+        </div>
+
         <div class="sec-label" style="margin-top:12px">Notes Inside</div>
         <div id="boxNotesList" style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px"></div>
       </div>
@@ -2089,6 +2309,144 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/continuelist.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/placeholder.min.js"></script>
+  <script>
+    // ── Minimal CM5 language modes bundled inline ──────────────────────
+    // Python
+    CodeMirror.defineMode("python", function () {
+      var keywords = /^(and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield|True|False|None)\b/;
+      var builtins = /^(print|len|range|int|str|float|list|dict|set|tuple|bool|type|isinstance|open|super|abs|all|any|enumerate|filter|format|map|max|min|next|reversed|round|sorted|sum|zip)\b/;
+      return {
+        startState: function () { return { inStr: false, strCh: "", inComment: false }; },
+        token: function (stream, state) {
+          if (stream.match(/^#.*/)) return "comment";
+          if (state.inStr) {
+            if (stream.match(state.strCh)) { state.inStr = false; }
+            else { if (stream.peek() === "\\") stream.next(); stream.next(); }
+            return "string";
+          }
+          if (stream.match('"""') || stream.match("'''")) { state.inStr = true; state.strCh = stream.current(); return "string"; }
+          if (stream.match('"') || stream.match("'")) { state.inStr = true; state.strCh = stream.current(); return "string"; }
+          if (stream.match(keywords)) return "keyword";
+          if (stream.match(builtins)) return "builtin";
+          if (stream.match(/^@\w+/)) return "meta";
+          if (stream.match(/^[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?/)) return "number";
+          if (stream.match(/^[+\-*\/=<>!&|^~%]+/)) return "operator";
+          stream.next(); return null;
+        }
+      };
+    });
+    CodeMirror.defineMIME("text/x-python", "python");
+
+    // JavaScript
+    CodeMirror.defineMode("javascript", function () {
+      var kwRe = /^(break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|finally|for|function|if|import|in|instanceof|let|new|of|return|static|super|switch|this|throw|try|typeof|var|void|while|with|yield|async|await|from)\b/;
+      var biRe = /^(console|document|window|Array|Object|String|Number|Boolean|Math|Date|JSON|Promise|undefined|null|NaN|Infinity)\b/;
+      return {
+        startState: function () { return { inStr: false, strCh: "", inBlock: false }; },
+        token: function (stream, state) {
+          if (state.inBlock) { if (stream.match("*/")) { state.inBlock = false; } else stream.next(); return "comment"; }
+          if (stream.match("/*")) { state.inBlock = true; return "comment"; }
+          if (stream.match(/^\/\/.*/)) return "comment";
+          if (state.inStr) {
+            if (stream.peek() === state.strCh) { stream.next(); state.inStr = false; }
+            else if (stream.peek() === "\\") { stream.next(); stream.next(); }
+            else stream.next();
+            return "string";
+          }
+          if (stream.match("`") || stream.match('"') || stream.match("'")) { state.inStr = true; state.strCh = stream.current(); return "string"; }
+          if (stream.match(kwRe)) return "keyword";
+          if (stream.match(biRe)) return "builtin";
+          if (stream.match(/^0x[0-9a-fA-F]+|^[0-9]+(\.[0-9]+)?/)) return "number";
+          if (stream.match(/^[+\-*\/=<>!&|^~%?:]+/)) return "operator";
+          stream.next(); return null;
+        }
+      };
+    });
+    CodeMirror.defineMIME("text/javascript", "javascript");
+    CodeMirror.defineMIME("text/x-javascript", "javascript");
+
+    // Shell
+    CodeMirror.defineMode("shell", function () {
+      var kwRe = /^(if|then|else|elif|fi|for|while|do|done|case|esac|function|in|return|break|continue|exit|export|local|source)\b/;
+      var biRe = /^(echo|cd|ls|grep|sed|awk|cat|mkdir|rm|cp|mv|find|git|npm|pip|python|python3|node|bash|sh)\b/;
+      return {
+        startState: function () { return { inStr: false, strCh: "" }; },
+        token: function (stream, state) {
+          if (stream.match(/^#.*/)) return "comment";
+          if (state.inStr) { if (stream.peek() === state.strCh) { stream.next(); state.inStr = false; } else stream.next(); return "string"; }
+          if (stream.match('"') || stream.match("'")) { state.inStr = true; state.strCh = stream.current(); return "string"; }
+          if (stream.match(/^\$\{?[a-zA-Z_]\w*\}?/)) return "variable";
+          if (stream.match(kwRe)) return "keyword";
+          if (stream.match(biRe)) return "builtin";
+          if (stream.match(/^[0-9]+/)) return "number";
+          stream.next(); return null;
+        }
+      };
+    });
+    CodeMirror.defineMIME("text/x-sh", "shell");
+
+    // Rust
+    CodeMirror.defineMode("rust", function () {
+      var kwRe = /^(as|async|await|break|const|continue|crate|dyn|else|enum|extern|false|fn|for|if|impl|in|let|loop|match|mod|move|mut|pub|ref|return|self|Self|static|struct|super|trait|true|type|unsafe|use|where|while)\b/;
+      return {
+        startState: function () { return { inStr: false, inBlock: false }; },
+        token: function (stream, state) {
+          if (state.inBlock) { if (stream.match("*/")) state.inBlock = false; else stream.next(); return "comment"; }
+          if (stream.match("/*")) { state.inBlock = true; return "comment"; }
+          if (stream.match(/^\/\/.*/)) return "comment";
+          if (state.inStr) { if (stream.peek() === '"') { stream.next(); state.inStr = false; } else if (stream.peek() === "\\") { stream.next(); stream.next(); } else stream.next(); return "string"; }
+          if (stream.match('"')) { state.inStr = true; return "string"; }
+          if (stream.match(kwRe)) return "keyword";
+          if (stream.match(/^[A-Z]\w*/)) return "variable-3";
+          if (stream.match(/^[0-9]+/)) return "number";
+          stream.next(); return null;
+        }
+      };
+    });
+
+    // CSS
+    CodeMirror.defineMode("css", function () {
+      return {
+        startState: function () { return { inComment: false, inStr: false, strCh: "" }; },
+        token: function (stream, state) {
+          if (state.inComment) { if (stream.match("*/")) state.inComment = false; else stream.next(); return "comment"; }
+          if (stream.match("/*")) { state.inComment = true; return "comment"; }
+          if (state.inStr) { if (stream.peek() === state.strCh) { stream.next(); state.inStr = false; } else stream.next(); return "string"; }
+          if (stream.match('"') || stream.match("'")) { state.inStr = true; state.strCh = stream.current(); return "string"; }
+          if (stream.match(/^#[0-9a-fA-F]{3,8}/)) return "atom";
+          if (stream.match(/^-?[0-9]+(\.[0-9]+)?(px|em|rem|vh|vw|%|s|ms|deg)?/)) return "number";
+          if (stream.match(/^@[a-zA-Z-]+/)) return "keyword";
+          if (stream.match(/^:[a-zA-Z-]+/)) return "variable";
+          stream.next(); return null;
+        }
+      };
+    });
+    CodeMirror.defineMIME("text/css", "css");
+
+    // Go
+    CodeMirror.defineMode("go", function () {
+      var kwRe = /^(break|case|chan|const|continue|default|defer|else|fallthrough|for|func|go|goto|if|import|interface|map|package|range|return|select|struct|switch|type|var)\b/;
+      var biRe = /^(append|cap|close|copy|delete|len|make|new|panic|print|println|recover)\b/;
+      return {
+        startState: function () { return { inStr: false, inBlock: false }; },
+        token: function (stream, state) {
+          if (state.inBlock) { if (stream.match("*/")) state.inBlock = false; else stream.next(); return "comment"; }
+          if (stream.match("/*")) { state.inBlock = true; return "comment"; }
+          if (stream.match(/^\/\/.*/)) return "comment";
+          if (state.inStr) { if (stream.peek() === '"') { stream.next(); state.inStr = false; } else if (stream.peek() === "\\") { stream.next(); stream.next(); } else stream.next(); return "string"; }
+          if (stream.match('`')) { while (!stream.match('`') && !stream.eol()) stream.next(); return "string"; }
+          if (stream.match('"')) { state.inStr = true; return "string"; }
+          if (stream.match(kwRe)) return "keyword";
+          if (stream.match(biRe)) return "builtin";
+          if (stream.match(/^[0-9]+/)) return "number";
+          stream.next(); return null;
+        }
+      };
+    });
+
+  </script>
+
+
   <script>
     // ═══════════════════════════════════════════════════════════════════
     //  CONSTANTS
@@ -2387,6 +2745,16 @@
       const rgbs = hexColors.map(hexToRgb);
       return rgbToHex(...[0, 1, 2].map(i => rgbs.reduce((s, c) => s + c[i], 0) / rgbs.length));
     }
+    function boxColor(box) {
+      if (!box.tags || !box.tags.length) return box.color || '#4e4a62';
+      const colors = box.tags.map(tagColor);
+      if (colors.length === 1 || colorMode === 'dominant') return colors[0];
+      if (colorMode === 'rgb') return blendRgb(colors);
+      // arc mode: blend with Oklab (arc segments not applicable to rectangles)
+      if (colorMode === 'arc') return blendOklab(colors);
+      return blendOklab(colors); // default / oklab
+    }
+
     function nodeColor(note) {
       if (!note.tags || !note.tags.length) return '#4e4a62';
       const colors = note.tags.map(tagColor);
@@ -2427,18 +2795,40 @@
     }
 
     function renderFilterBar() {
-      const bar = document.getElementById('tagFilterBar');
       const tags = allTags();
-      bar.innerHTML = `<span class="filter-label">Filter</span>` +
-        tags.map(t => `
-      <button class="filter-tag ${activeTags.has(t.id) ? 'active' : ''}"
-        style="--ftag-color:${t.color}"
-        onclick="toggleFilterTag('${t.id}')">
-        <span class="ftag-dot" style="background:${t.color}"></span>${t.label}
-      </button>`).join('') +
-        (activeTags.size ? `<button class="filter-clear" onclick="clearTagFilter()">clear ×</button>` : '');
+      const bar = document.getElementById('tagFilterBar');
       bar.classList.toggle('has-tags', tags.length > 0);
+      // Dropdown options
+      const dd = document.getElementById('filterDropdown');
+      dd.innerHTML = tags.map(t => `
+    <button class="filter-option ${activeTags.has(t.id) ? 'active' : ''}" style="--ftag-color:${t.color}"
+      onclick="toggleFilterTag('${t.id}')">
+      <span class="fo-dot" style="background:${t.color}"></span>${t.label}
+      ${activeTags.has(t.id) ? '<span class="fo-check">✓</span>' : ''}
+    </button>`).join('');
+      // Active chips
+      const chips = document.getElementById('filterActiveChips');
+      chips.innerHTML = [...activeTags].map(id => {
+        const t = allTags().find(x => x.id === id); if (!t) return '';
+        return `<span class="filter-chip" style="--ftag-color:${t.color}" onclick="toggleFilterTag('${t.id}')">
+      <span class="chip-dot"></span>${t.label}<span class="chip-x">×</span></span>`;
+      }).join('');
+      // Dropdown button state
+      const btn = document.getElementById('filterDropdownBtn');
+      btn.classList.toggle('active', activeTags.size > 0);
+      // Clear button
+      document.getElementById('filterClearBtn').style.display = activeTags.size ? '' : 'none';
     }
+
+    function toggleFilterDropdown() {
+      document.getElementById('filterDropdown').classList.toggle('open');
+    }
+
+    // Close filter dropdown on outside click
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#filterDropdownWrap'))
+        document.getElementById('filterDropdown')?.classList.remove('open');
+    });
 
     function toggleFilterTag(id) {
       if (activeTags.has(id)) activeTags.delete(id);
@@ -2619,8 +3009,8 @@
           const ac = worldToScreen(a.x + a.w / 2, a.y + a.h / 2);
           const bc = worldToScreen(b.x + b.w / 2, b.y + b.h / 2);
           const grad = ctx.createLinearGradient(ac.x, ac.y, bc.x, bc.y);
-          grad.addColorStop(0, a.color + '99');
-          grad.addColorStop(1, b.color + '99');
+          grad.addColorStop(0, boxColor(a) + '99');
+          grad.addColorStop(1, boxColor(b) + '99');
           ctx.beginPath(); ctx.moveTo(ac.x, ac.y); ctx.lineTo(bc.x, bc.y);
           ctx.strokeStyle = grad; ctx.lineWidth = 1.5;
           ctx.setLineDash([6, 3]); ctx.stroke(); ctx.setLineDash([]);
@@ -2633,12 +3023,16 @@
           const sw = br.x - tl.x, sh = br.y - tl.y;
           const isSel = selectedBox?.id === b.id;
           const isLight = document.documentElement.classList.contains('light');
+          const bqMatch = !q || (b.title || 'Untitled Section').toLowerCase().includes(q);
+          const btMatch = !activeTags.size || [...activeTags].every(t => (b.tags || []).includes(t));
+          const bDimmed = !bqMatch || !btMatch;
+          ctx.globalAlpha = bDimmed ? 0.08 : 1;
           // Fill
           ctx.beginPath(); ctx.rect(tl.x, tl.y, sw, sh);
-          ctx.fillStyle = b.color + (isLight ? '18' : '14');
+          ctx.fillStyle = boxColor(b) + (isLight ? '18' : '14');
           ctx.fill();
           // Border
-          ctx.strokeStyle = b.color + (isSel ? 'cc' : '55');
+          ctx.strokeStyle = boxColor(b) + (isSel ? 'cc' : '55');
           ctx.lineWidth = isSel ? 1.5 : 1;
           ctx.setLineDash(isSel ? [] : [6, 4]);
           ctx.stroke(); ctx.setLineDash([]);
@@ -2649,10 +3043,9 @@
             ctx.textAlign = 'left';
             const pad = 8;
             const tw = ctx.measureText(b.title).width;
-            // White-out background behind text so it sits on the border line
             ctx.fillStyle = isLight ? 'rgba(248,244,235,0.92)' : 'rgba(11,11,18,0.88)';
             ctx.fillRect(tl.x + pad - 2, tl.y - fs / 2 - 1, tw + 8, fs + 2);
-            ctx.fillStyle = b.color;
+            ctx.fillStyle = boxColor(b);
             ctx.fillText(b.title, tl.x + pad, tl.y + fs * 0.35);
           }
           // Resize handles (8 corners + edges) when selected
@@ -2666,12 +3059,13 @@
             ].forEach(h => {
               ctx.beginPath();
               ctx.rect(h.x - hSz / 2, h.y - hSz / 2, hSz, hSz);
-              ctx.fillStyle = b.color;
+              ctx.fillStyle = boxColor(b);
               ctx.strokeStyle = isLight ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)';
               ctx.lineWidth = 1;
               ctx.fill(); ctx.stroke();
             });
           }
+          ctx.globalAlpha = 1;
         });
 
         links.forEach(l => {
@@ -2745,16 +3139,37 @@
       requestAnimationFrame(draw);
     }
 
+    // minimap world->mini coords (shared between draw and click handler)
+    let _miniSc = 1, _miniOx = 0, _miniOy = 0;
+
     function drawMinimap() {
       const W = miniCanvas.width = 140, H = miniCanvas.height = 90;
       const mLight = document.documentElement.classList.contains('light');
       miniCtx.clearRect(0, 0, W, H); miniCtx.fillStyle = mLight ? '#eceae4' : '#10101a'; miniCtx.fillRect(0, 0, W, H);
-      if (!notes.length) return;
-      const xs = notes.map(n => n.x), ys = notes.map(n => n.y);
+      const allItems = [...notes.map(n => ({ x: n.x, y: n.y })),
+      ...boxes.map(b => ({ x: b.x, y: b.y })), ...boxes.map(b => ({ x: b.x + b.w, y: b.y + b.h }))];
+      if (!allItems.length) return;
+      const xs = allItems.map(p => p.x), ys = allItems.map(p => p.y);
       const minX = Math.min(...xs) - 60, maxX = Math.max(...xs) + 60;
       const minY = Math.min(...ys) - 60, maxY = Math.max(...ys) + 60;
       const sc = Math.min(W / (maxX - minX), H / (maxY - minY)) * 0.85;
       const ox = W / 2 - (minX + maxX) / 2 * sc, oy = H / 2 - (minY + maxY) / 2 * sc;
+      _miniSc = sc; _miniOx = ox; _miniOy = oy;
+      // Draw boxes
+      boxes.forEach(b => {
+        const tx = b.x * sc + ox, ty = b.y * sc + oy;
+        const bw = b.w * sc, bh = b.h * sc;
+        miniCtx.beginPath(); miniCtx.rect(tx, ty, bw, bh);
+        miniCtx.fillStyle = boxColor(b) + '22'; miniCtx.fill();
+        miniCtx.strokeStyle = boxColor(b) + '88'; miniCtx.lineWidth = 0.5; miniCtx.stroke();
+        // Title
+        if (b.title && bw > 20) {
+          miniCtx.fillStyle = boxColor(b);
+          miniCtx.font = '5px "JetBrains Mono",monospace';
+          miniCtx.textAlign = 'left';
+          miniCtx.fillText(b.title.slice(0, 18), tx + 2, ty + 6);
+        }
+      });
       links.forEach(l => {
         const f = notes.find(n => n.id === l.from), t = notes.find(n => n.id === l.to);
         if (!f || !t) return;
@@ -2766,6 +3181,31 @@
         miniCtx.fillStyle = nodeColor(n) + 'cc'; miniCtx.fill();
       });
     }
+
+    // Minimap click: centre canvas on clicked world position,
+    // or open box panel if clicked inside a box
+    miniCanvas.addEventListener('click', e => {
+      const rect = miniCanvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) * (miniCanvas.width / rect.width);
+      const my = (e.clientY - rect.top) * (miniCanvas.height / rect.height);
+      // Convert minimap px -> world coords
+      const wx = (mx - _miniOx) / _miniSc;
+      const wy = (my - _miniOy) / _miniSc;
+      // Check if click lands inside a box (reverse order = topmost first)
+      for (let i = boxes.length - 1; i >= 0; i--) {
+        const b = boxes[i];
+        if (wx >= b.x && wx <= b.x + b.w && wy >= b.y && wy <= b.y + b.h) {
+          // Centre canvas on box centre
+          vpX = -(b.x + b.w / 2); vpY = -(b.y + b.h / 2);
+          saveViewport(); markDirty();
+          openBoxPanel(b);
+          return;
+        }
+      }
+      // Otherwise just centre on click point
+      vpX = -wx; vpY = -wy;
+      saveViewport(); markDirty();
+    });
 
     // ═══════════════════════════════════════════════════════════════════
     //  CANVAS INTERACTION
@@ -3161,18 +3601,52 @@
     // ── Box panel ────────────────────────────────────────────────────
     let boxPosLocked = true;
 
-    function renderBoxColorSwatches(box) {
-      document.getElementById('boxColorSwatches').innerHTML = SWATCH_COLORS.map(col => {
-        const sel = col === box.color;
-        return `<span class="color-swatch ${sel ? 'selected' : ''}" style="background:${col}"
-      onclick="setBoxColor('${col}')"></span>`;
-      }).join('');
+    let boxNewTagColor = SWATCH_COLORS[0];
+
+    function openBoxNewTagForm() {
+      const form = document.getElementById('boxNewTagForm');
+      form.classList.add('open');
+      document.getElementById('boxNewTagSwatches').innerHTML = SWATCH_COLORS.map(col =>
+        `<span class="color-swatch ${col === boxNewTagColor ? 'selected' : ''}" style="background:${col}"
+      onclick="boxNewTagColor='${col}';openBoxNewTagForm()"></span>`).join('');
+      document.getElementById('boxNewTagName').focus();
     }
 
-    function setBoxColor(col) {
+    function closeBoxNewTagForm() {
+      document.getElementById('boxNewTagForm').classList.remove('open');
+      document.getElementById('boxNewTagName').value = '';
+    }
+
+    function createBoxTag() {
+      const raw = document.getElementById('boxNewTagName').value.trim().toLowerCase().replace(/\s+/g, '-');
+      if (!raw) return;
+      if (allTags().find(t => t.id === raw)) { toast('Tag already exists'); return; }
+      const tag = { id: raw, label: raw, color: boxNewTagColor };
+      customTags.push(tag);
+      closeBoxNewTagForm();
+      renderFilterBar(); renderLegend();
+      if (selectedBox) { renderBoxTags(selectedBox); }
+      saveAll();
+      toast(`Tag "${raw}" created`);
+    }
+
+    function renderBoxTags(box) {
+      document.getElementById('boxPanelMeta').innerHTML =
+        allTags().map(t => `
+      <div class="meta-tag ${(box.tags || []).includes(t.id) ? 'selected' : ''}"
+           data-tag="${t.id}" style="--tag-color:${t.color}" onclick="toggleBoxTag('${t.id}')">
+        <span class="tag-dot"></span>${t.label}
+      </div>`).join('') +
+        `<button class="meta-tag-add" onclick="openBoxNewTagForm()">+ tag</button>`;
+    }
+
+    function toggleBoxTag(tagId) {
       if (!selectedBox) return;
-      selectedBox.color = col;
-      renderBoxColorSwatches(selectedBox);
+      if (!selectedBox.tags) selectedBox.tags = [];
+      const idx = selectedBox.tags.indexOf(tagId);
+      if (idx >= 0) selectedBox.tags.splice(idx, 1);
+      else selectedBox.tags.push(tagId);
+      renderBoxTags(selectedBox);
       saveAll(); markDirty();
     }
 
@@ -3229,7 +3703,7 @@
       ['boxPosX', 'boxPosY', 'boxPosW', 'boxPosH'].forEach(id =>
         document.getElementById(id).disabled = true);
       updateBoxPosFields();
-      renderBoxColorSwatches(box);
+      renderBoxTags(box);
       renderBoxNotesList(box);
       renderBoxConnections(box);
       document.getElementById('boxLinkSearch').value = '';
@@ -3255,7 +3729,7 @@
       document.getElementById('boxConnectionsList').innerHTML = connected.length
         ? connected.map(b => `
         <div class="link-item" onclick="openBoxPanel(boxes.find(x=>x.id===${b.id}))">
-          <div class="link-dot" style="background:${b.color}"></div>
+          <div class="link-dot" style="background:${boxColor(b)}"></div>
           <span>${b.title || 'Untitled Section'}</span>
           <span class="link-remove" onclick="event.stopPropagation();removeBoxLink(${box.id},${b.id})">×</span>
         </div>`).join('')
@@ -3335,8 +3809,8 @@
       const tl = screenToWorld(cx - 100, cy - 80);
       const box = {
         id: nextId++, title: 'New Section',
-        color: SWATCH_COLORS[Math.floor(Math.random() * SWATCH_COLORS.length)],
-        x: tl.x, y: tl.y, w: 300, h: 200
+        color: '#4e4a62',
+        x: tl.x, y: tl.y, w: 300, h: 200, tags: []
       };
       boxes.push(box); saveAll(); openBoxPanel(box);
       document.getElementById('boxTitle').select();
@@ -3411,7 +3885,7 @@
     function initCM() {
       const el = document.getElementById('cmEditor');
       cmInstance = CodeMirror(el, {
-        mode: 'markdown',
+        mode: { name: 'markdown', fencedCodeBlockHighlighting: true, highlightFormatting: true },
         theme: 'garden',
         lineWrapping: true,
         autofocus: false,
@@ -3425,8 +3899,9 @@
           saveAll();
         }
         renderCMWidgets();
+        scheduleCMHighlight();
       });
-      // widgets rendered on 'change' only — 'update' fires too aggressively
+      // fence styling on 'change' only
       // Fit CM to container height
       cmInstance.setSize('100%', '100%');
     }
@@ -3442,7 +3917,7 @@
     function _doRenderCMWidgets() {
       if (!cmInstance) return;
       // Clear previous marks
-      _cmMarks.forEach(m => m.clear());
+      _cmMarks.forEach(m => { try { m.clear(); } catch (e) { } });
       _cmMarks.length = 0;
       const doc = cmInstance.getDoc();
       const lineCount = doc.lineCount();
@@ -3474,92 +3949,92 @@
           _cmMarks.push(mark);
         }
         // Transclusion: ![[Note Title]] or ![[Note Title#Heading]]
+        // Use addLineWidget (not replacedWith) so CM knows the widget height
+        // and cursor mapping stays correct for all lines below.
         const transRe = /!\[\[([^\]]+)\]\]/g;
         let tm;
         while ((tm = transRe.exec(text)) !== null) {
           const fullStart = tm.index;
           const fullEnd = fullStart + tm[0].length;
-          const ref = tm[1]; // "Note Title" or "Note Title#Heading"
+          const ref = tm[1];
           const hashIdx = ref.indexOf('#');
           const noteTitle = hashIdx >= 0 ? ref.slice(0, hashIdx) : ref;
           const heading = hashIdx >= 0 ? ref.slice(hashIdx + 1) : null;
           const target = notes.find(n => n.title === noteTitle);
 
+          // Build the card
           const wrap = document.createElement('div');
           wrap.className = 'cm-transclude';
-
           const header = document.createElement('div');
           header.className = 'cm-transclude-header';
           header.innerHTML = `<span class="tc-icon">⎘</span>${noteTitle}${heading ? ` <span style="opacity:.6">#${heading}</span>` : ''}`;
           wrap.appendChild(header);
-
           const body = document.createElement('div');
           if (target) {
             let content = target.content || '';
             if (heading) {
-              // Extract only the section under the matching heading
-              const lines = content.split('\n');
+              const contentLines = content.split('\n');
               const slugify = h => h.toLowerCase().replace(/[_-]/g, ' ').replace(/[^a-z0-9 ]/g, '').trim();
               const slug = slugify(heading);
-              let inSection = false, sectionLines = [];
-              let headingLevel = 0;
-              for (const ln of lines) {
+              let inSection = false, sectionLines = [], headingLevel = 0;
+              for (const ln of contentLines) {
                 const hm = ln.match(/^(#{1,6})\s+(.+)/);
                 if (hm) {
-                  const lvl = hm[1].length;
-                  const title = slugify(hm[2]);
-                  if (!inSection && title === slug) {
-                    inSection = true;
-                    headingLevel = lvl;
-                    sectionLines.push(ln);
-                  } else if (inSection && lvl <= headingLevel) {
-                    break; // next heading at same/higher level
-                  } else if (inSection) {
-                    sectionLines.push(ln);
-                  }
-                } else if (inSection) {
-                  sectionLines.push(ln);
-                }
+                  const lvl = hm[1].length, title = slugify(hm[2]);
+                  if (!inSection && title === slug) { inSection = true; headingLevel = lvl; sectionLines.push(ln); }
+                  else if (inSection && lvl <= headingLevel) break;
+                  else if (inSection) sectionLines.push(ln);
+                } else if (inSection) sectionLines.push(ln);
               }
               content = sectionLines.length ? sectionLines.join('\n') : '*(Heading not found)*';
             }
             body.className = 'cm-transclude-body';
             body.innerHTML = renderMarkdown(content);
+            // Prevent transclusion scroll from bubbling to CM
+            body.addEventListener('wheel', e => e.stopPropagation(), { passive: true });
           } else {
             body.className = 'cm-transclude-missing';
             body.textContent = `Note "${noteTitle}" not found`;
           }
           wrap.appendChild(body);
 
+          // Hide the raw ![[...]] syntax with a zero-width mark
+          const hideMark = doc.markText(
+            { line: i, ch: fullStart }, { line: i, ch: fullEnd },
+            { collapsed: true, handleMouseEvents: false }
+          );
+          _cmMarks.push(hideMark);
+
+          // Add a proper line widget below the (now-hidden) syntax line
+          const lineWidget = cmInstance.addLineWidget(i, wrap, {
+            handleMouseEvents: true,
+            noHScroll: true,
+            above: false,
+          });
+          // Store as a pseudo-mark object so _cmMarks.forEach(m=>m.clear()) works
+          _cmMarks.push({ clear: () => { lineWidget.clear(); hideMark.clear(); }, find: () => ({ from: { line: i, ch: fullStart } }) });
+
           // Cmd+click opens note; plain click exposes raw syntax
-          let transcludeMark;
           wrap.addEventListener('click', e => {
             e.preventDefault(); e.stopPropagation();
             if (e.metaKey || e.ctrlKey) { if (target) openNote(target); return; }
-            const pos = transcludeMark.find();
-            if (pos) {
-              transcludeMark.clear();
-              _cmMarks.splice(_cmMarks.indexOf(transcludeMark), 1);
-              cmInstance.focus(); cmInstance.setCursor(pos.from);
-              const editLine = pos.from.line;
-              _cmEditingLines.add(editLine);
-              const onCursor = () => {
-                if (cmInstance.getCursor().line !== editLine) {
-                  cmInstance.off('cursorActivity', onCursor); cmInstance.off('blur', onCursor);
-                  _cmEditingLines.delete(editLine);
-                  renderCMWidgets();
-                }
-              };
-              cmInstance.on('cursorActivity', onCursor); cmInstance.on('blur', onCursor);
-            }
+            // Expose raw syntax: clear the hide mark and widget
+            hideMark.clear();
+            lineWidget.clear();
+            const idx = _cmMarks.findIndex(m => { try { return m.find && m.find()?.from?.line === i; } catch (e) { return false; } });
+            if (idx >= 0) _cmMarks.splice(idx, 1);
+            cmInstance.focus(); cmInstance.setCursor({ line: i, ch: fullStart });
+            _cmEditingLines.add(i);
+            const onCursor = () => {
+              if (cmInstance.getCursor().line !== i) {
+                cmInstance.off('cursorActivity', onCursor); cmInstance.off('blur', onCursor);
+                _cmEditingLines.delete(i);
+                renderCMWidgets();
+              }
+            };
+            cmInstance.on('cursorActivity', onCursor); cmInstance.on('blur', onCursor);
           });
           wrap.addEventListener('mousedown', e => e.stopPropagation());
-
-          transcludeMark = doc.markText(
-            { line: i, ch: fullStart }, { line: i, ch: fullEnd },
-            { replacedWith: wrap, handleMouseEvents: true }
-          );
-          _cmMarks.push(transcludeMark);
         }
 
         // Wikilinks: [[Note Title]] or [[Note Title#Heading]]
@@ -3702,11 +4177,96 @@
       }
     }
 
+    // Track fenced code block lines and add background class
+    let _hlTimer = null;
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      try { document.execCommand('copy'); } catch (e) { }
+      document.body.removeChild(ta);
+    }
+
+    function scheduleCMHighlight() {
+      clearTimeout(_hlTimer);
+      _hlTimer = setTimeout(applyFencedCodeStyling, 400);
+    }
+
+    // Fence copy-button widgets
+    const _fenceWidgets = [];
+
+    function applyFencedCodeStyling() {
+      if (!cmInstance) return;
+      _fenceWidgets.forEach(w => { try { w.clear(); } catch (e) { } });
+      _fenceWidgets.length = 0;
+      const doc = cmInstance.getDoc();
+      let inFence = false, fenceLang = '';
+      for (let i = 0; i < doc.lineCount(); i++) {
+        const text = doc.getLine(i);
+        const fm = text.trim().match(/^```(\w*)$/);
+        if (fm && !inFence) {
+          inFence = true; fenceLang = fm[1] || 'code';
+          cmInstance.addLineClass(i, 'text', 'cm-fenced-code-open');
+          cmInstance.removeLineClass(i, 'text', 'cm-fenced-code');
+          cmInstance.removeLineClass(i, 'text', 'cm-fenced-code-close');
+          // Replace the entire fence open line with a header widget
+          ; (function (lineIdx, lang) {
+            const header = document.createElement('div');
+            header.className = 'cm-fence-header-widget';
+            const langEl = document.createElement('span');
+            langEl.textContent = lang || 'code';
+            langEl.className = 'cm-fence-lang';
+            const btn = document.createElement('button');
+            btn.className = 'cm-fence-copy';
+            btn.textContent = 'copy';
+            btn.addEventListener('mousedown', function (e) { e.stopPropagation(); });
+            btn.addEventListener('click', function (e) {
+              e.stopPropagation(); e.preventDefault();
+              let body = [], j = lineIdx + 1;
+              while (j < doc.lineCount() && !doc.getLine(j).trim().startsWith('```')) {
+                body.push(doc.getLine(j++));
+              }
+              var text = body.join('\n');
+              if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).catch(function () { fallbackCopy(text); });
+              } else { fallbackCopy(text); }
+              btn.textContent = 'copied!';
+              setTimeout(function () { btn.textContent = 'copy'; }, 1500);
+            });
+            header.appendChild(langEl);
+            header.appendChild(btn);
+            const lineLen = doc.getLine(lineIdx).length;
+            const m = doc.markText(
+              { line: lineIdx, ch: 0 }, { line: lineIdx, ch: lineLen },
+              { replacedWith: header, handleMouseEvents: true }
+            );
+            _fenceWidgets.push({ clear: function () { m.clear(); } });
+          })(i, fenceLang);
+        } else if (fm && inFence) {
+          inFence = false;
+          cmInstance.addLineClass(i, 'text', 'cm-fenced-code-close');
+          cmInstance.removeLineClass(i, 'text', 'cm-fenced-code');
+          cmInstance.removeLineClass(i, 'text', 'cm-fenced-code-open');
+        } else if (inFence) {
+          cmInstance.addLineClass(i, 'text', 'cm-fenced-code');
+          cmInstance.removeLineClass(i, 'text', 'cm-fenced-code-open');
+          cmInstance.removeLineClass(i, 'text', 'cm-fenced-code-close');
+        } else {
+          cmInstance.removeLineClass(i, 'text', 'cm-fenced-code');
+          cmInstance.removeLineClass(i, 'text', 'cm-fenced-code-open');
+          cmInstance.removeLineClass(i, 'text', 'cm-fenced-code-close');
+        }
+      }
+    }
+
     function setCMValue(val) {
       if (!cmInstance) return;
       cmInstance.setValue(val || '');
       cmInstance.clearHistory();
       renderCMWidgets();
+      applyFencedCodeStyling();
     }
 
     function getCMValue() {
