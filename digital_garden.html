@@ -746,6 +746,51 @@
       color: var(--yellow);
     }
 
+    /* CM WIDGET STYLES */
+    .cm-task-checkbox {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 11px;
+      height: 11px;
+      border: 1px solid var(--border);
+      background: none;
+      cursor: pointer;
+      vertical-align: middle;
+      margin-right: 3px;
+      position: relative;
+      top: -1px;
+      transition: all 0.15s;
+    }
+
+    .cm-task-checkbox:checked {
+      background: var(--cyan);
+      border-color: var(--cyan);
+    }
+
+    .cm-task-checkbox:checked::after {
+      content: '';
+      position: absolute;
+      left: 2px;
+      top: -1px;
+      width: 5px;
+      height: 8px;
+      border: 2px solid var(--bg);
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+
+    .cm-link-widget {
+      color: var(--cyan);
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-color: rgba(0, 170, 170, 0.4);
+    }
+
+    .cm-link-widget:hover {
+      text-decoration-color: var(--cyan);
+    }
+
     /* CODEMIRROR THEME */
     .CodeMirror {
       flex: 1;
@@ -1733,7 +1778,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="brand">GARDEN</span>
-      <span class="version-badge">v0.16.0</span>
+      <span class="version-badge">v0.16.2</span>
       <div class="garden-switcher">
         <button class="garden-name-btn" id="gardenNameBtn" onclick="toggleGardenPopup()">Loading…</button>
         <button class="garden-dropdown-btn" onclick="toggleGardenPopup()">▾</button>
@@ -3274,24 +3319,92 @@
         indentWithTabs: false,
         extraKeys: { "Enter": "newlineAndIndentContinueMarkdownList" },
         placeholder: 'Write anything…',
-        spellcheck: acEnabled,
-        autocorrect: acEnabled,
-        autocapitalize: acEnabled,
       });
       cmInstance.on('change', () => {
         if (selectedNote) {
           selectedNote.content = cmInstance.getValue();
           saveAll();
         }
+        renderCMWidgets();
       });
+      // widgets rendered on 'change' only — 'update' fires too aggressively
       // Fit CM to container height
       cmInstance.setSize('100%', '100%');
+    }
+
+    // ── CM widgets: checkboxes + clickable links ────────────────────────
+    const _cmMarks = [];
+    let _cmWidgetTimer = null;
+    function renderCMWidgets() {
+      clearTimeout(_cmWidgetTimer);
+      _cmWidgetTimer = setTimeout(_doRenderCMWidgets, 80);
+    }
+    function _doRenderCMWidgets() {
+      if (!cmInstance) return;
+      // Clear previous marks
+      _cmMarks.forEach(m => m.clear());
+      _cmMarks.length = 0;
+      const doc = cmInstance.getDoc();
+      const lineCount = doc.lineCount();
+      for (let i = 0; i < lineCount; i++) {
+        const text = doc.getLine(i);
+        // Task list checkboxes: "- [ ] " or "- [x] "
+        const cbMatch = text.match(/^(\s*[-*+]\s+)(\[([ xX])\])(\s)/);
+        if (cbMatch) {
+          const start = cbMatch[1].length;
+          const end = start + cbMatch[2].length;
+          const checked = cbMatch[3].toLowerCase() === 'x';
+          const el = document.createElement('input');
+          el.type = 'checkbox'; el.checked = checked;
+          el.className = 'cm-task-checkbox';
+          el.addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); });
+          el.addEventListener('click', e => {
+            e.preventDefault();
+            const line = doc.getLine(i);
+            const newLine = el.checked
+              ? line.replace(/\[[ ]\]/, '[x]')
+              : line.replace(/\[[xX]\]/, '[ ]');
+            doc.replaceRange(newLine, { line: i, ch: 0 }, { line: i, ch: line.length });
+          });
+          const mark = doc.markText(
+            { line: i, ch: start }, { line: i, ch: end },
+            { replacedWith: el, handleMouseEvents: false }
+          );
+          _cmMarks.push(mark);
+        }
+        // Inline links: [text](url) — make the visible text cyan + underline
+        const linkRe = /\[([^\]]+)\]\(([^)]+)\)/g;
+        let lm;
+        while ((lm = linkRe.exec(text)) !== null) {
+          const fullStart = lm.index;
+          const fullEnd = fullStart + lm[0].length;
+          const label = lm[1], url = lm[2];
+          const span = document.createElement('span');
+          span.textContent = label;
+          span.className = 'cm-link-widget';
+          span.title = url;
+          span.addEventListener('click', e => {
+            if (e.metaKey || e.ctrlKey) {
+              // Try to find a note with matching title
+              const target = notes.find(n => n.title === label || n.title === url);
+              if (target) { openNote(target); return; }
+            }
+            if (url.startsWith('http')) window.open(url, '_blank', 'noopener');
+          });
+          const mark = doc.markText(
+            { line: i, ch: fullStart }, { line: i, ch: fullEnd },
+            { replacedWith: span, handleMouseEvents: false }
+          );
+          _cmMarks.push(mark);
+        }
+      }
     }
 
     function setCMValue(val) {
       if (!cmInstance) return;
       cmInstance.setValue(val || '');
       cmInstance.clearHistory();
+      renderCMWidgets();
     }
 
     function getCMValue() {
@@ -3310,9 +3423,11 @@
 
     function applyAcAttrs() {
       if (!cmInstance) return;
-      cmInstance.setOption('spellcheck', acEnabled);
-      cmInstance.setOption('autocorrect', acEnabled);
-      cmInstance.setOption('autocapitalize', acEnabled);
+      const ta = cmInstance.getInputField();
+      const on = acEnabled ? 'on' : 'off';
+      ta.setAttribute('spellcheck', String(acEnabled));
+      ta.setAttribute('autocorrect', on);
+      ta.setAttribute('autocapitalize', acEnabled ? 'sentences' : 'off');
     }
 
     function initAcBtn() {
