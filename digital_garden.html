@@ -1588,7 +1588,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="brand">GARDEN</span>
-      <span class="version-badge">v0.10.0</span>
+      <span class="version-badge">v0.11.0</span>
       <div class="garden-switcher">
         <button class="garden-name-btn" id="gardenNameBtn" onclick="toggleGardenPopup()">Loading…</button>
         <button class="garden-dropdown-btn" onclick="toggleGardenPopup()">▾</button>
@@ -1796,6 +1796,7 @@
         gardens[currentGardenId].links = links;
         gardens[currentGardenId].nextId = nextId;
         gardens[currentGardenId].customTags = customTags;
+        gardens[currentGardenId].viewport = { vpX, vpY, vpScale };
       }
       try {
         localStorage.setItem('gdn_v3_data', JSON.stringify({ gardens, gardenIds, currentGardenId }));
@@ -1854,7 +1855,10 @@
       nextId = g.nextId || 1;
       customTags = g.customTags || [];
 
-      vpX = 0; vpY = 0; vpScale = 1;
+      // Restore saved viewport or fall through to resetView
+      const savedVp = gardens[id].viewport;
+      if (savedVp) { vpX = savedVp.vpX; vpY = savedVp.vpY; vpScale = savedVp.vpScale; }
+      else { vpX = 0; vpY = 0; vpScale = 1; }
       selectedNote = null; hoveredNote = null;
       selectedNotes.clear();
       activeTags.clear();
@@ -1863,7 +1867,8 @@
       renderTagsPanel();
       renderFilterBar();
       renderLegend();
-      resetView();
+      if (!gardens[id].viewport) resetView();
+      else markDirty();
     }
 
     // Init
@@ -2352,7 +2357,8 @@
         boxSelCurX = cx; boxSelCurY = cy; return;
       }
       if (isDragging) {
-        vpX = dragVpX + (cx - dragStartX) / vpScale; vpY = dragVpY + (cy - dragStartY) / vpScale; return;
+        vpX = dragVpX + (cx - dragStartX) / vpScale; vpY = dragVpY + (cy - dragStartY) / vpScale;
+        saveViewport(); return;
       }
       hoveredNote = noteAt(cx, cy);
       canvas.style.cursor = (e.metaKey || e.ctrlKey) ? 'crosshair' : (hoveredNote ? 'pointer' : 'grab');
@@ -2403,7 +2409,7 @@
 
     canvas.addEventListener('wheel', e => {
       e.preventDefault();
-      vpScale = Math.max(0.2, Math.min(3, vpScale * (e.deltaY > 0 ? 0.9 : 1.1))); markDirty();
+      vpScale = Math.max(0.2, Math.min(3, vpScale * (e.deltaY > 0 ? 0.9 : 1.1))); saveViewport(); markDirty();
     }, { passive: false });
 
     // ═══════════════════════════════════════════════════════════════════
@@ -2615,24 +2621,31 @@
       document.getElementById('noteTitle').focus();
     }
 
+    function saveViewport() {
+      if (currentGardenId && gardens[currentGardenId])
+        gardens[currentGardenId].viewport = { vpX, vpY, vpScale };
+      // Debounced localStorage write
+      clearTimeout(saveViewport._t);
+      saveViewport._t = setTimeout(saveAll, 400);
+    }
+
     function resetView() {
       if (!notes.length) { vpX = 0; vpY = 0; vpScale = 1; markDirty(); return; }
       const dpr = window.devicePixelRatio || 1;
       const cw = canvas.width / dpr, ch = canvas.height / dpr;
-      // Centroid of all notes
-      const mx = notes.reduce((s, n) => s + n.x, 0) / notes.length;
-      const my = notes.reduce((s, n) => s + n.y, 0) / notes.length;
-      // Fit scale so all notes are visible with padding
       const xs = notes.map(n => n.x), ys = notes.map(n => n.y);
       const minX = Math.min(...xs), maxX = Math.max(...xs);
       const minY = Math.min(...ys), maxY = Math.max(...ys);
-      const pad = 80;
-      const rangeX = maxX - minX + pad * 2, rangeY = maxY - minY + pad * 2;
-      const scale = Math.min(3, Math.max(0.2, Math.min(cw / rangeX, ch / rangeY)));
-      vpScale = scale;
-      // Centre viewport on centroid
-      vpX = -mx; vpY = -my;
-      markDirty();
+      const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+      const pad = 100;
+      const rangeX = maxX - minX + pad * 2 || pad * 2;
+      const rangeY = maxY - minY + pad * 2 || pad * 2;
+      // Scale to fit all notes, accounting for node radius
+      const nodeR = 24; // generous node radius buffer in world units
+      vpScale = Math.min(3, Math.max(0.15, Math.min(cw / (rangeX + nodeR * 2), ch / (rangeY + nodeR * 2))));
+      // Centre on bounding box midpoint, not centroid, so outliers aren't cut off
+      vpX = -cx; vpY = -cy;
+      saveViewport(); markDirty();
     }
 
     // ═══════════════════════════════════════════════════════════════════
