@@ -674,6 +674,78 @@
       background: var(--border);
     }
 
+    /* POSITION VECTOR */
+    .pos-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .pos-field {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .pos-axis {
+      font-size: 0.44rem;
+      letter-spacing: 0.12em;
+      color: var(--cyan);
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .pos-input {
+      flex: 1;
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      outline: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem;
+      color: var(--ink-mid);
+      padding: 2px 4px;
+      text-align: right;
+      width: 0;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .pos-input:focus {
+      border-color: var(--cyan);
+      color: var(--ink);
+    }
+
+    .pos-input:disabled {
+      color: var(--ink-dim);
+      cursor: default;
+    }
+
+    .pos-lock {
+      font-size: 0.6rem;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--ink-dim);
+      cursor: pointer;
+      padding: 2px 6px;
+      transition: all 0.15s;
+      font-family: 'JetBrains Mono', monospace;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .pos-lock:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .pos-lock.unlocked {
+      border-color: var(--yellow);
+      color: var(--yellow);
+    }
+
     /* SECTION LABELS */
     .sec-label {
       font-size: 0.44rem;
@@ -1516,7 +1588,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="brand">GARDEN</span>
-      <span class="version-badge">v0.9.0</span>
+      <span class="version-badge">v0.10.0</span>
       <div class="garden-switcher">
         <button class="garden-name-btn" id="gardenNameBtn" onclick="toggleGardenPopup()">Loading…</button>
         <button class="garden-dropdown-btn" onclick="toggleGardenPopup()">▾</button>
@@ -1573,6 +1645,18 @@
       </div>
       <div class="panel-body">
         <div class="panel-scroll">
+          <div class="sec-label">Position</div>
+          <div class="pos-row">
+            <div class="pos-field">
+              <span class="pos-axis">X</span>
+              <input class="pos-input" id="posX" type="number" step="0.01" disabled>
+            </div>
+            <div class="pos-field">
+              <span class="pos-axis">Y</span>
+              <input class="pos-input" id="posY" type="number" step="0.01" disabled>
+            </div>
+            <button class="pos-lock" id="posLock" onclick="togglePosLock()" title="Unlock to edit position">🔒</button>
+          </div>
           <div class="sec-label">Tags</div>
           <div class="panel-meta" id="panelMeta"></div>
           <div class="new-tag-form" id="newTagForm">
@@ -2260,6 +2344,7 @@
           nodeDragMoved = true;
           const w = screenToWorld(cx - nodeDragOffX, cy - nodeDragOffY);
           nodeDragging.x = w.x; nodeDragging.y = w.y;
+          if (selectedNote?.id === nodeDragging.id) updatePosFields();
         }
         return;
       }
@@ -2339,7 +2424,57 @@
       if (ls) { ls.value = ''; closeLinkResults(); }
       // Open in preview if note has content, edit if blank so user can start typing
       setContentMode(note.content && note.content.trim() ? 'preview' : 'edit');
+      posLocked = true;
+      document.getElementById('posLock').textContent = '🔒';
+      document.getElementById('posLock').classList.remove('unlocked');
+      document.getElementById('posX').disabled = true;
+      document.getElementById('posY').disabled = true;
+      updatePosFields();
     }
+
+    // ── Position widget ─────────────────────────────────────────────────
+    let posLocked = true;
+
+    function togglePosLock() {
+      posLocked = !posLocked;
+      const btn = document.getElementById('posLock');
+      const px = document.getElementById('posX');
+      const py = document.getElementById('posY');
+      btn.textContent = posLocked ? '🔒' : '🔓';
+      btn.classList.toggle('unlocked', !posLocked);
+      px.disabled = posLocked;
+      py.disabled = posLocked;
+      if (!posLocked) px.focus();
+    }
+
+    function updatePosFields() {
+      if (!selectedNote) return;
+      const px = document.getElementById('posX');
+      const py = document.getElementById('posY');
+      // Only update if not currently being edited to avoid cursor jump
+      if (document.activeElement !== px)
+        px.value = parseFloat(selectedNote.x.toFixed(2));
+      if (document.activeElement !== py)
+        py.value = parseFloat(selectedNote.y.toFixed(2));
+    }
+
+    // Wire inputs: commit position on change, clamp and save
+    document.getElementById('posX').addEventListener('input', () => {
+      if (!selectedNote || posLocked) return;
+      const v = parseFloat(document.getElementById('posX').value);
+      if (isFinite(v)) { selectedNote.x = v; markDirty(); }
+    });
+    document.getElementById('posY').addEventListener('input', () => {
+      if (!selectedNote || posLocked) return;
+      const v = parseFloat(document.getElementById('posY').value);
+      if (isFinite(v)) { selectedNote.y = v; markDirty(); }
+    });
+    // Save on blur/enter
+    ['posX', 'posY'].forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('blur', () => { if (!posLocked) saveAll(); });
+      el.addEventListener('keydown', e => { if (e.key === 'Enter') { el.blur(); } });
+    });
 
     function closePanel() {
       document.getElementById('notePanel').classList.remove('open');
