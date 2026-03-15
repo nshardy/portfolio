@@ -24,7 +24,7 @@
       --border: rgba(255, 255, 255, 0.07);
       --ink: #dcd8f0;
       --ink-mid: #8a859e;
-      --ink-dim: #4e4a62;
+      --ink-dim: #6b6880;
       --cyan: #00AAAA;
       --purple: #8b7fcf;
       --green: #4ec994;
@@ -653,7 +653,7 @@
     /* NOTE PANEL */
     .note-panel {
       position: fixed;
-      top: 0;
+      top: 50px;
       right: 0;
       bottom: 0;
       width: 380px;
@@ -682,6 +682,7 @@
       align-items: center;
       justify-content: space-between;
       margin-bottom: 10px;
+      min-height: 28px;
     }
 
     .panel-id {
@@ -1379,7 +1380,7 @@
     /* BOX PANEL */
     .box-panel {
       position: fixed;
-      top: 0;
+      top: 50px;
       right: 0;
       bottom: 0;
       width: 380px;
@@ -2079,7 +2080,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="brand">GARDEN</span>
-      <span class="version-badge">v0.19.2</span>
+      <span class="version-badge">v0.19.3</span>
       <div class="garden-switcher">
         <button class="garden-name-btn" id="gardenNameBtn" onclick="toggleGardenPopup()">Loading…</button>
         <button class="garden-dropdown-btn" onclick="toggleGardenPopup()">▾</button>
@@ -3368,7 +3369,7 @@
       if (e.metaKey || e.ctrlKey) return;  // cmd+dblclick reserved for box-select, no note creation
       const w = screenToWorld(cx, cy);
       const containing = boxContaining(w.x, w.y);
-      const note = { id: nextId++, title: '', content: '', tags: [], x: w.x, y: w.y, boxId: containing?.id || null };
+      const note = { id: nextId++, title: '', content: '', tags: [], x: w.x, y: w.y, boxId: containing?.id || null, createdAt: Date.now() };
       notes.push(note);
       const connectTo = lastMousedownSelection.size ? lastMousedownSelection : selectedNotes;
       connectTo.forEach(sid => {
@@ -3395,7 +3396,12 @@
       selectedBox = null;
       selectedNote = note; markDirty();
       document.getElementById('notePanel').classList.add('open');
-      document.getElementById('panelNoteId').textContent = `note #${note.id}`;
+      const noteIdx = notes.indexOf(note) + 1;
+      const createdStr = note.createdAt
+        ? new Date(note.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+        : '';
+      document.getElementById('panelNoteId').innerHTML =
+        `note #${noteIdx}` + (createdStr ? ` <span style="opacity:0.45;font-size:0.42rem">· ${createdStr}</span>` : '');
       document.getElementById('noteTitle').value = note.title || '';
       if (cmInstance) setCMValue(note.content || '');
       else document.addEventListener('cmReady', () => setCMValue(note.content || ''), { once: true });
@@ -3820,7 +3826,7 @@
       const _dpr = window.devicePixelRatio || 1;
       const w = screenToWorld(canvas.width / 2 / _dpr + (Math.random() - 0.5) * 200, canvas.height / 2 / _dpr + (Math.random() - 0.5) * 200);
       const containing2 = boxContaining(w.x, w.y);
-      const note = { id: nextId++, title: '', content: '', tags: [], x: w.x, y: w.y, boxId: containing2?.id || null };
+      const note = { id: nextId++, title: '', content: '', tags: [], x: w.x, y: w.y, boxId: containing2?.id || null, createdAt: Date.now() };
       notes.push(note); saveAll(); openNote(note);
       document.getElementById('noteTitle').focus();
     }
